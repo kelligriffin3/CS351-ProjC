@@ -127,6 +127,19 @@ g_worldMat = new Matrix4();				// Changes CVV drawing axes to 'world' axes.
 // member functions to ensure every VBObox draws its 3D parts and assemblies
 // using the same 3D camera at the same 3D position in the same 3D world).
 
+// VARS FOR CAMERA MOVEMENT
+// Vars for Camera moving
+var eye_x = -5; 
+var eye_y = 3.5;
+var eye_z = 2.5;
+var theta = -0.5;
+var d_tilt = -0.3;
+var aim_x = 0.0;
+var aim_y = 0.0;
+var aim_z = 0.0;
+var z_far = 20.0;
+var z_near = 1.0;
+
 function main() {
 //=============================================================================
   // Retrieve the HTML-5 <canvas> element where webGL will draw our pictures:
@@ -155,6 +168,11 @@ function main() {
 
   gl.enable(gl.DEPTH_TEST);
 
+  // Add Event Listeners for keydown and keyup
+  // this is used for moving the camera for user to navigate the world
+  window.addEventListener("keydown", myKeyDown, false);
+  window.addEventListener("keyup", myKeyUp, false);
+
   /*
 //----------------SOLVE THE 'REVERSED DEPTH' PROBLEM:------------------------
   // IF the GPU doesn't transform our vertices by a 3D Camera Projection Matrix
@@ -181,7 +199,8 @@ function main() {
   gouraudBox.init(gl);		//  "		"		"  for 1st kind of shading & lighting
 	phongBox.init(gl);    //  "   "   "  for 2nd kind of shading & lighting
 	
-setCamera();				// TEMPORARY: set a global camera used by ALL VBObox objects...
+//setCamera();				// TEMPORARY: set a global camera used by ALL VBObox objects...
+drawResize();
 	
   gl.clearColor(0.3, 0.3, 0.3, 1);	  // RGBA color for clearing <canvas>
   
@@ -328,15 +347,208 @@ function setCamera() {
 // ALL VBObox objects.  REPLACE This with your own camera-control code.
 
 	g_worldMat.setIdentity();
-	g_worldMat.perspective(42.0,   // FOVY: top-to-bottom vertical image angle, in degrees
-  										1.0,   // Image Aspect Ratio: camera lens width/height
-                      1.0,   // camera z-near distance (always positive; frustum begins at z = -znear)
-                      200.0);  // camera z-far distance (always positive; frustum ends at z = -zfar)
+	// g_worldMat.perspective(42.0,   // FOVY: top-to-bottom vertical image angle, in degrees
+  // 										1.0,   // Image Aspect Ratio: camera lens width/height
+  //                     1.0,   // camera z-near distance (always positive; frustum begins at z = -znear)
+  //                     200.0);  // camera z-far distance (always positive; frustum ends at z = -zfar)
 
-  g_worldMat.lookAt( 5.0, 5.0, 3.0,	// center of projection
-  								 0.0, 0.0, 0.0,	// look-at point 
-  								 0.0, 0.0, 1.0);	// View UP vector.
+  // g_worldMat.lookAt( 5.0, 5.0, 3.0,	// center of projection
+  // 								 0.0, 0.0, 0.0,	// look-at point 
+  // 								 0.0, 0.0, 1.0);	// View UP vector.
 	// READY to draw in the 'world' coordinate system.
+
+  gl.viewport(0,						// Viewport lower-left corner
+              0, 							// location(in pixels)
+              g_canvasID.width, 			// viewport width,
+              g_canvasID.height);
+  var vpAspect = (g_canvasID.width) / (g_canvasID.height);
+
+  g_worldMat.perspective(40.0,
+                        vpAspect,
+                        z_near, // z near - 1 
+                        z_far); // z far - 1000
+
+  aim_x = eye_x + Math.cos(theta);
+  aim_y = eye_y + Math.sin(theta);
+  aim_z = eye_z + d_tilt;
+
+  g_worldMat.lookAt(eye_x, eye_y, eye_z,
+                    aim_x, aim_y, aim_z,
+                    0, 0, 1);
+
+  
 //------------END COPY
 
+}
+
+function myKeyDown(kev) {
+  //===============================================================================
+  // Called when user presses down ANY key on the keyboard;
+  //
+  // For a light, easy explanation of keyboard events in JavaScript,
+  // see:    http://www.kirupa.com/html5/keyboard_events_in_javascript.htm
+  // For a thorough explanation of a mess of JavaScript keyboard event handling,
+  // see:    http://javascript.info/tutorial/keyboard-events
+  //
+  // NOTE: Mozilla deprecated the 'keypress' event entirely, and in the
+  //        'keydown' event deprecated several read-only properties I used
+  //        previously, including kev.charCode, kev.keyCode. 
+  //        Revised 2/2019:  use kev.key and kev.code instead.
+  //
+  // Report EVERYTHING in console:
+    console.log(  "--kev.code:",    kev.code,   "\t\t--kev.key:",     kev.key, 
+          "\n--kev.ctrlKey:", kev.ctrlKey,  "\t--kev.shiftKey:",kev.shiftKey,
+          "\n--kev.altKey:",  kev.altKey,   "\t--kev.metaKey:", kev.metaKey);
+  
+   
+    switch(kev.code) {
+      //----------------Arrow keys------------------------
+      case "ArrowLeft": 	
+        console.log(' left-arrow.');
+        look_left()
+        break;
+      case "ArrowRight":
+        console.log('right-arrow.');
+        look_right();
+        break;
+      case "ArrowUp":
+        console.log("arrow-up");
+        look_up();
+        break;
+      case "ArrowDown":
+        console.log("arrow-down")
+        look_down();
+        break;
+      case "KeyW":
+        console.log("key W")
+        move_forward();
+        break;
+      case "KeyD":
+        console.log("key D")
+        move_right();
+        break;
+      case "KeyS":
+        console.log("key S")
+        move_backward();
+        break;
+      case "KeyA":
+        console.log("key A")
+        move_left();
+        break;
+      
+
+    default:
+      console.log("UNUSED!");
+      break;
+    }
+    kev.preventDefault();
+}
+
+function look_right(){
+  console.log("looking right");
+  theta -= 0.01;
+  setCamera()
+}
+
+function look_left(){
+  console.log("looking left");
+  theta += 0.01;
+  setCamera()
+}
+
+function look_down(){
+  console.log("looking down");
+  d_tilt -= 0.01;
+  setCamera()
+}
+
+function look_up(){
+  console.log("looking up");
+  d_tilt += 0.01;
+  setCamera()
+}
+
+function move_left(){
+// adjust where the eye goes
+  console.log("moving left");
+
+  b1 = 0;
+  b2 = 0;
+  b3 = 1;
+  new_aim_x = eye_x - aim_x;
+  new_aim_y = eye_y - aim_y;
+  new_aim_z = eye_z - aim_z;
+  cross = [ new_aim_y * b3 - new_aim_z * b2, new_aim_z * b1 - new_aim_x * b3, new_aim_x * b2 - new_aim_y * b1 ]
+
+  eye_x += cross[0] * 0.1;
+  eye_y += cross[1] * 0.1;
+  eye_z += cross[2] * 0.1;
+
+  setCamera()
+}
+
+function move_right(){
+  console.log("moving right");
+
+  b1 = 0;
+  b2 = 0;
+  b3 = 1;
+  new_aim_x = eye_x - aim_x;
+  new_aim_y = eye_y - aim_y;
+  new_aim_z = eye_z - aim_z;
+  cross = [ new_aim_y * b3 - new_aim_z * b2, new_aim_z * b1 - new_aim_x * b3, new_aim_x * b2 - new_aim_y * b1 ]
+
+  eye_x -= cross[0] * 0.1;
+  eye_y -= cross[1] * 0.1;
+  eye_z -= cross[2] * 0.1;
+
+  setCamera()
+}
+
+function move_forward(){
+  console.log("moving forward");
+  eye_x += Math.cos(theta) * 0.15;
+  eye_y += Math.sin(theta) * 0.15;
+  eye_z += d_tilt * 0.15;
+
+  setCamera()
+}
+
+function move_backward(){
+  console.log("moving backwards");
+  eye_x -= Math.cos(theta) * 0.15;
+  eye_y -= Math.sin(theta) * 0.15;
+  eye_z -= d_tilt * 0.15;
+
+  setCamera()
+}
+
+function myKeyUp(kev) {
+//===============================================================================
+// Called when user releases ANY key on the keyboard; captures scancodes well
+
+  console.log('myKeyUp()--keyCode='+kev.keyCode+' released.');
+}
+
+function drawResize() {
+	//==============================================================================
+	// Called when user re-sizes their browser window , because our HTML file
+	// contains:  <body onload="main()" onresize="winResize()">
+			
+	//Report our current browser-window contents:
+			
+	console.log('g_Canvas width,height=', g_canvasID.width, g_canvasID.height);		
+	// console.log('Browser window: innerWidth,innerHeight=', 
+														// innerWidth, innerHeight);	
+														// http://www.w3schools.com/jsref/obj_window.asp
+			
+				
+	//Make canvas fill the top 2/3 of our browser window:
+	var xtraMargin = 16; 
+	g_canvasID.width = innerWidth - xtraMargin;
+	g_canvasID.height = (innerHeight*7/10) - xtraMargin;
+	// IMPORTANT!  Need a fresh drawing in the re-sized viewports.
+	//draw();				// draw in all viewports.
+  setCamera();
+	drawAll();
 }

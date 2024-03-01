@@ -5,7 +5,7 @@
     <title>Proj C</title>
   </head>
 
-  <body onload="main()">
+  <body onload="main()" onresize="drawResize()">
     <canvas id="webgl" width="600" height="600">
     Please use a browser that supports "canvas"
     </canvas>
@@ -14,6 +14,23 @@
       <button type="button" onclick="VBO1toggle()">VBO-1 hide/show</button>
       <button type="button" onclick="VBO2toggle()">VBO-2 hide/show</button>
     </p>
+    <hr>
+    <p>
+      Use your arrow keys to change the tilt of the camera:
+       <ul>
+         <li>Up Arrow: look up</li>
+         <li>Down Arrow: look down</li>
+         <li>Right Arrow: look right</li>
+         <li>Left Arrow: look left</li>
+       </ul>
+       Use 'WASD' keys to move through the world:
+       <ul>
+         <li>W: move forward</li>
+         <li>A: move to the left</li>
+         <li>S: move backward</li>
+         <li>D: move to the right</li>
+       </ul>
+       
     <script src="lib/webgl-utils.js"></script>
     <script src="lib/webgl-debug.js"></script>
     <script src="lib/cuon-utils.js"></script>
