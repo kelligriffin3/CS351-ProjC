@@ -128,16 +128,15 @@ g_worldMat = new Matrix4();				// Changes CVV drawing axes to 'world' axes.
 // using the same 3D camera at the same 3D position in the same 3D world).
 
 // VARS FOR CAMERA MOVEMENT
-// Vars for Camera moving
-var eye_x = -5; 
-var eye_y = 3.5;
-var eye_z = 2.5;
-var theta = -0.5;
+var eye_x = 5; 
+var eye_y = 5;
+var eye_z = 3;
+var theta = -2.2;
 var d_tilt = -0.3;
 var aim_x = 0.0;
 var aim_y = 0.0;
 var aim_z = 0.0;
-var z_far = 20.0;
+var z_far = 100.0;
 var z_near = 1.0;
 
 function main() {
@@ -347,15 +346,6 @@ function setCamera() {
 // ALL VBObox objects.  REPLACE This with your own camera-control code.
 
 	g_worldMat.setIdentity();
-	// g_worldMat.perspective(42.0,   // FOVY: top-to-bottom vertical image angle, in degrees
-  // 										1.0,   // Image Aspect Ratio: camera lens width/height
-  //                     1.0,   // camera z-near distance (always positive; frustum begins at z = -znear)
-  //                     200.0);  // camera z-far distance (always positive; frustum ends at z = -zfar)
-
-  // g_worldMat.lookAt( 5.0, 5.0, 3.0,	// center of projection
-  // 								 0.0, 0.0, 0.0,	// look-at point 
-  // 								 0.0, 0.0, 1.0);	// View UP vector.
-	// READY to draw in the 'world' coordinate system.
 
   gl.viewport(0,						// Viewport lower-left corner
               0, 							// location(in pixels)
@@ -363,18 +353,18 @@ function setCamera() {
               g_canvasID.height);
   var vpAspect = (g_canvasID.width) / (g_canvasID.height);
 
-  g_worldMat.perspective(40.0,
-                        vpAspect,
-                        z_near, // z near - 1 
-                        z_far); // z far - 1000
+  g_worldMat.perspective(40.0,    // FOVY: top-to-bottom vertical image angle, in degrees
+                        vpAspect, // Image Aspect Ratio: camera lens width/height
+                        z_near,   // camera z-near distance (always positive; frustum begins at z = -znear) 
+                        z_far);   // camera z-far distance (always positive; frustum ends at z = -zfar)
 
   aim_x = eye_x + Math.cos(theta);
   aim_y = eye_y + Math.sin(theta);
   aim_z = eye_z + d_tilt;
 
-  g_worldMat.lookAt(eye_x, eye_y, eye_z,
-                    aim_x, aim_y, aim_z,
-                    0, 0, 1);
+  g_worldMat.lookAt(eye_x, eye_y, eye_z,  // center of projection
+                    aim_x, aim_y, aim_z,  // look-at point 
+                    0, 0, 1);             // View UP vector.
 
   
 //------------END COPY
@@ -447,6 +437,7 @@ function myKeyDown(kev) {
 function look_right(){
   console.log("looking right");
   theta -= 0.01;
+  console.log(theta);
   setCamera()
 }
 
