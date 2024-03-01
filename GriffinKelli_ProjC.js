@@ -630,9 +630,9 @@ function makeSphere() {
 											// (choose odd # or prime# to avoid accidental symmetry)
   var sliceVerts	= 27;	// # of vertices around the top edge of the slice
 											// (same number of vertices on bottom of slice, too)
-  var topColr = new Float32Array([0.7, 0.7, 0.7]);	// North Pole: light gray
-  var equColr = new Float32Array([0.3, 0.7, 0.3]);	// Equator:    bright green
-  var botColr = new Float32Array([0.9, 0.9, 0.9]);	// South Pole: brightest gray.
+  var topColr = new Float32Array([0.2, 1.0, 2.0]);	// North Pole: light gray
+  var equColr = new Float32Array([0.2, 1.0, 2.0]);	// Equator:    bright green
+  var botColr = new Float32Array([0.2, 1.0, 2.0]);	// South Pole: brightest gray.
   var sliceAngle = Math.PI/slices;	// lattitude angle spanned by one slice.
 
 	// Create a (global) array to hold this sphere's vertices:
@@ -687,9 +687,9 @@ function makeSphere() {
 				sphVerts[j+6]=botColr[2];	
 			}
 			else {
-					sphVerts[j+4]=Math.random();// equColr[0]; 
-					sphVerts[j+5]=Math.random();// equColr[1]; 
-					sphVerts[j+6]=Math.random();// equColr[2];					
+					sphVerts[j+4]= equColr[0]; 
+					sphVerts[j+5]= equColr[1]; 
+					sphVerts[j+6]= equColr[2];					
 			}
 		}
 	}

@@ -497,11 +497,11 @@ function VBObox1() {
   uniform mat4 u_ModelMatrix;
   attribute vec4 a_Pos1;
   attribute vec3 a_Colr1;
-  attribute float a_PtSiz1; 
+  // attribute float a_PtSiz1; 
   varying vec3 v_Colr1;
   //
   void main() {
-    gl_PointSize = a_PtSiz1;
+   // gl_PointSize = a_PtSiz1;
     gl_Position = u_ModelMatrix * a_Pos1;
   	 v_Colr1 = a_Colr1;
    }`;
@@ -513,7 +513,7 @@ function VBObox1() {
 // b) 'ROUND FLAT' -- uses 'gl_PointCoord' to make solid-color dot instead;
 // c) 'SHADED Sphere' -- radial distance sets color to 'fake' a lit 3D sphere.
 //   You too can be a 'shader writer'! What other fragment shaders would help?
-/*
+
  // a) SQUARE points:
 	this.FRAG_SRC = //---------------------- FRAGMENT SHADER source code 
  `precision mediump float;
@@ -522,7 +522,6 @@ function VBObox1() {
     gl_FragColor = vec4(v_Colr1, 1.0);
   }`;
 
-*/
 /*
  // b) ROUND FLAT dots:
 	this.FRAG_SRC = //---------------------- FRAGMENT SHADER source code 
@@ -535,7 +534,7 @@ function VBObox1() {
       } else {discard;};
   }`;
 */
-// /*
+/*
  // c) SHADED, sphere-like dots:
 	this.FRAG_SRC = //---------------------- FRAGMENT SHADER source code 
  `precision mediump float;
@@ -546,17 +545,22 @@ function VBObox1() {
  	  	gl_FragColor = vec4((1.0-2.0*dist)*v_Colr1.rgb, 1.0);
       } else {discard;};
   }`;
-//*/
-	this.vboContents = //---------------------------------------------------------
-		new Float32Array ([					// Array of vertex attribute values we will
-  															// transfer to GPU's vertex buffer object (VBO)
-			// 1 vertex per line: pos1 x,y,z,w;   colr1; r,g,b;   ptSiz1; 
-  	-0.3,  0.7,	0.0, 1.0,		0.0, 1.0, 1.0,  17.0,
-    -0.3, -0.3, 0.0, 1.0,		1.0, 0.0, 1.0,  20.0,
-     0.3, -0.3, 0.0, 1.0,		1.0, 1.0, 0.0,  33.0,
-  ]);	
+*/
+	// this.vboContents = //---------------------------------------------------------
+	// 	new Float32Array ([					// Array of vertex attribute values we will
+  // 															// transfer to GPU's vertex buffer object (VBO)
+	// 		// 1 vertex per line: pos1 x,y,z,w;   colr1; r,g,b;   ptSiz1; 
+  // 	-0.3,  0.7,	0.0, 1.0,		0.0, 1.0, 1.0,  300.0,
+  //   -0.3, -0.3, 0.0, 1.0,		1.0, 0.0, 1.0,  20.0,
+  //    0.3, -0.3, 0.0, 1.0,		1.0, 1.0, 0.0,  33.0,
+  // ]);	
+
+  makeSphere();
+  // console.log(sphVerts.length);
+  this.vboContents = sphVerts;
+  this.vboVerts = sphVerts.length / 7;
   
-	this.vboVerts = 3;							// # of vertices held in 'vboContents' array;
+	// this.vboVerts = 3;							// # of vertices held in 'vboContents' array;
 	this.FSIZE = this.vboContents.BYTES_PER_ELEMENT;  
 	                              // bytes req'd by 1 vboContents array element;
 																// (why? used to compute stride and offset 
@@ -574,10 +578,10 @@ function VBObox1() {
   this.vboFcount_a_Pos1 =  4;    // # of floats in the VBO needed to store the
                                 // attribute named a_Pos1. (4: x,y,z,w values)
   this.vboFcount_a_Colr1 = 3;   // # of floats for this attrib (r,g,b values)
-  this.vboFcount_a_PtSiz1 = 1;  // # of floats for this attrib (just one!)   
+  // this.vboFcount_a_PtSiz1 = 1;  // # of floats for this attrib (just one!)   
   console.assert((this.vboFcount_a_Pos1 +     // check the size of each and
-                  this.vboFcount_a_Colr1 +
-                  this.vboFcount_a_PtSiz1) *   // every attribute in our VBO
+                  this.vboFcount_a_Colr1) * //+
+                  //this.vboFcount_a_PtSiz1) *   // every attribute in our VBO
                   this.FSIZE == this.vboStride, // for agreeement with'stride'
                   "Uh oh! VBObox1.vboStride disagrees with attribute-size values!");
                   
@@ -588,8 +592,8 @@ function VBObox1() {
                                 // == 4 floats * bytes/float
                                 //# of bytes from START of vbo to the START
                                 // of 1st a_Colr1 attrib value in vboContents[]
-  this.vboOffset_a_PtSiz1 =(this.vboFcount_a_Pos1 +
-                            this.vboFcount_a_Colr1) * this.FSIZE; 
+  // this.vboOffset_a_PtSiz1 =(this.vboFcount_a_Pos1 +
+  //                           this.vboFcount_a_Colr1) * this.FSIZE; 
                                 // == 7 floats * bytes/float
                                 // # of bytes from START of vbo to the START
                                 // of 1st a_PtSize attrib value in vboContents[]
@@ -602,7 +606,7 @@ function VBObox1() {
 								          //------Attribute locations in our shaders:
 	this.a_Pos1Loc;							  // GPU location: shader 'a_Pos1' attribute
 	this.a_Colr1Loc;							// GPU location: shader 'a_Colr1' attribute
-	this.a_PtSiz1Loc;							// GPU location: shader 'a_PtSiz1' attribute
+	//this.a_PtSiz1Loc;							// GPU location: shader 'a_PtSiz1' attribute
 	
 	            //---------------------- Uniform locations &values in our shaders
 	this.ModelMatrix = new Matrix4();	// Transforms CVV axes to model axes.
@@ -684,12 +688,12 @@ VBObox1.prototype.init = function() {
     						'.init() failed to get the GPU location of attribute a_Colr1');
     return -1;	// error exit.
   }
-  this.a_PtSiz1Loc = gl.getAttribLocation(this.shaderLoc, 'a_PtSiz1');
-  if(this.a_PtSiz1Loc < 0) {
-    console.log(this.constructor.name + 
-	    					'.init() failed to get the GPU location of attribute a_PtSiz1');
-	  return -1;	// error exit.
-  }
+  // this.a_PtSiz1Loc = gl.getAttribLocation(this.shaderLoc, 'a_PtSiz1');
+  // if(this.a_PtSiz1Loc < 0) {
+  //   console.log(this.constructor.name + 
+	//     					'.init() failed to get the GPU location of attribute a_PtSiz1');
+	//   return -1;	// error exit.
+  // }
   // c2) Find All Uniforms:-----------------------------------------------------
   //Get GPU storage location for each uniform var used in our shader programs: 
  this.u_ModelMatrixLoc = gl.getUniformLocation(this.shaderLoc, 'u_ModelMatrix');
@@ -750,13 +754,13 @@ VBObox1.prototype.switchToMe = function () {
   gl.vertexAttribPointer(this.a_Colr1Loc, this.vboFcount_a_Colr1,
                          gl.FLOAT, false, 
   						           this.vboStride,  this.vboOffset_a_Colr1);
-  gl.vertexAttribPointer(this.a_PtSiz1Loc,this.vboFcount_a_PtSiz1, 
-                         gl.FLOAT, false, 
-							           this.vboStride,	this.vboOffset_a_PtSiz1);	
+  // gl.vertexAttribPointer(this.a_PtSiz1Loc,this.vboFcount_a_PtSiz1, 
+  //                        gl.FLOAT, false, 
+	// 						           this.vboStride,	this.vboOffset_a_PtSiz1);	
   //-- Enable this assignment of the attribute to its' VBO source:
   gl.enableVertexAttribArray(this.a_Pos1Loc);
   gl.enableVertexAttribArray(this.a_Colr1Loc);
-  gl.enableVertexAttribArray(this.a_PtSiz1Loc);
+  // gl.enableVertexAttribArray(this.a_PtSiz1Loc);
 }
 
 VBObox1.prototype.isReady = function() {
@@ -815,7 +819,7 @@ VBObox1.prototype.draw = function() {
   }
   
   // ----------------------------Draw the contents of the currently-bound VBO:
-  gl.drawArrays(gl.POINTS,		    // select the drawing primitive to draw:
+  gl.drawArrays(gl.TRIANGLE_STRIP,		    // select the drawing primitive to draw:
                   // choices: gl.POINTS, gl.LINES, gl.LINE_STRIP, gl.LINE_LOOP, 
                   //          gl.TRIANGLES, gl.TRIANGLE_STRIP,
   							0, 								// location of 1st vertex to draw;
@@ -1290,3 +1294,123 @@ function makeGroundGrid() {
 			gndVerts[j+6] = yColr[2];			// blu
 		}
 	}
+
+// function make_sphere(){
+
+//   var SPHERE_DIV = 13;
+
+//   var i, ai, si, ci;
+//   var j, aj, sj, cj;
+//   var p1, p2;
+
+//   var circle_positions = [];
+//   var circle_indices = [];
+
+//   // Generate coordinates
+//   for (j = 0; j <= SPHERE_DIV; j++) {
+//     aj = j * Math.PI / SPHERE_DIV;
+//     sj = Math.sin(aj);
+//     cj = Math.cos(aj);
+//     for (i = 0; i <= SPHERE_DIV; i++) {
+//       ai = i * 2 * Math.PI / SPHERE_DIV;
+//       si = Math.sin(ai);
+//       ci = Math.cos(ai);
+
+//       circle_positions.push(si * sj);  // X
+//       circle_positions.push(cj);       // Y
+//       circle_positions.push(ci * sj);  // Z
+//     }
+//   }
+
+//   // Generate indices
+//   for (j = 0; j < SPHERE_DIV; j++) {
+//     for (i = 0; i < SPHERE_DIV; i++) {
+//       p1 = j * (SPHERE_DIV+1) + i;
+//       p2 = p1 + (SPHERE_DIV+1);
+
+//       circle_indices.push(p1);
+//       circle_indices.push(p2);
+//       circle_indices.push(p1 + 1);
+
+//       circle_indices.push(p1 + 1);
+//       circle_indices.push(p2);
+//       circle_indices.push(p2 + 1);
+//     }
+//   }
+
+//   return circle_indices
+// }
+
+function makeSphere() {
+  //==============================================================================
+  // Make a sphere from one OpenGL TRIANGLE_STRIP primitive.   
+    var slices = 13;		// # of slices of the sphere along the z axis. >=3 req'd
+                        // (choose odd # or prime# to avoid accidental symmetry)
+    var sliceVerts	= 27;	// # of vertices around the top edge of the slice
+                        // (same number of vertices on bottom of slice, too)
+    var topColr = new Float32Array([0.2, 1.0, 0.2]);	// North Pole: light gray
+    var equColr = new Float32Array([0.2, 1.0, 0.2]);	// Equator:    bright green
+    var botColr = new Float32Array([0.2, 1.0, 0.2]);	// South Pole: brightest gray.
+    var sliceAngle = Math.PI/slices;	// lattitude angle spanned by one slice.
+
+    var floatsPerVertex = 7;
+  
+    // Create a (global) array to hold this sphere's vertices:
+    sphVerts = new Float32Array(  ((slices * 2* sliceVerts) -2) * floatsPerVertex);
+    
+    var cos0 = 0.0;					// sines,cosines of slice's top, bottom edge.
+    var sin0 = 0.0;
+    var cos1 = 0.0;
+    var sin1 = 0.0;	
+    var j = 0;							// initialize our array index
+    var isLast = 0;
+    var isFirst = 1;
+    for(s=0; s<slices; s++) {	// for each slice of the sphere,
+      // find sines & cosines for top and bottom of this slice
+      if(s==0) {
+        isFirst = 1;	// skip 1st vertex of 1st slice.
+        cos0 = 1.0; 	// initialize: start at north pole.
+        sin0 = 0.0;
+      }
+      else {					// otherwise, new top edge == old bottom edge
+        isFirst = 0;	
+        cos0 = cos1;
+        sin0 = sin1;
+      }								// & compute sine,cosine for new bottom edge.
+      cos1 = Math.cos((s+1)*sliceAngle);
+      sin1 = Math.sin((s+1)*sliceAngle);
+      // go around the entire slice, generating TRIANGLE_STRIP verts
+      // (Note we don't initialize j; grows with each new attrib,vertex, and slice)
+      if(s==slices-1) isLast=1;	// skip last vertex of last slice.
+      for(v=isFirst; v< 2*sliceVerts-isLast; v++, j+=floatsPerVertex) {	
+        if(v%2==0)
+        {				
+          sphVerts[j  ] = sin0 * Math.cos(Math.PI*(v)/sliceVerts); 	
+          sphVerts[j+1] = sin0 * Math.sin(Math.PI*(v)/sliceVerts);	
+          sphVerts[j+2] = cos0;		
+          sphVerts[j+3] = 1.0;			
+        }
+        else { 
+          sphVerts[j  ] = sin1 * Math.cos(Math.PI*(v-1)/sliceVerts);		// x
+          sphVerts[j+1] = sin1 * Math.sin(Math.PI*(v-1)/sliceVerts);		// y
+          sphVerts[j+2] = cos1;																				// z
+          sphVerts[j+3] = 1.0;																				// w.		
+        }
+        if(s==0) {	// finally, set some interesting colors for vertices:
+          sphVerts[j+4]=topColr[0]; 
+          sphVerts[j+5]=topColr[1]; 
+          sphVerts[j+6]=topColr[2];	
+          }
+        else if(s==slices-1) {
+          sphVerts[j+4]=botColr[0]; 
+          sphVerts[j+5]=botColr[1]; 
+          sphVerts[j+6]=botColr[2];	
+        }
+        else {
+            sphVerts[j+4]=equColr[0]; 
+            sphVerts[j+5]=equColr[1]; 
+            sphVerts[j+6]=equColr[2];					
+        }
+      }
+    }
+  }
