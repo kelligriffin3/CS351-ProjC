@@ -113,6 +113,9 @@ var g_posMax1 =  1.0;           // max, min allowed positions
 var g_posMin1 = -1.0;
                                 //---------------
 
+// For sphere animation
+var sphere_angle = 0.0;
+
 // For mouse/keyboard:------------------------
 var g_show0 = 1;								// 0==Show, 1==Hide VBO0 contents on-screen.
 var g_show1 = 1;								// 	"					"			VBO1		"				"				" 
@@ -283,6 +286,10 @@ function timerAll() {
     g_posNow1 = g_posMin1;      // move back up to the min, and
     g_posRate1 = -g_posRate1;   // reverse direction of change.
     }
+
+  // New values for spinning sphere
+  var ANGLE_STEP_SPHERE = 45.0;
+  sphere_angle = (sphere_angle + (ANGLE_STEP_SPHERE * elapsedMS) / 1000.0) % 360;
 
 }
 

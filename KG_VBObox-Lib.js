@@ -799,8 +799,8 @@ VBObox1.prototype.adjust = function() {
 // THIS DOESN'T WORK!!  this.ModelMatrix = g_worldMat;
   this.ModelMatrix.set(g_worldMat);
 
-//  this.ModelMatrix.rotate(g_angleNow1, 0, 0, 1);	// -spin drawing axes,
   this.ModelMatrix.translate(1.0, -2.0, 0);						// then translate them.
+  this.ModelMatrix.rotate(sphere_angle, 0, 0, 1);
   //  Transfer new uniforms' values to the GPU:-------------
   // Send  new 'ModelMat' values to the GPU's 'u_ModelMat1' uniform: 
   gl.uniformMatrix4fv(this.u_ModelMatrixLoc,	// GPU location of the uniform
