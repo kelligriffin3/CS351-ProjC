@@ -497,15 +497,23 @@ this.VERT_SRC =	//--------------------- VERTEX SHADER source code
  uniform mat4 u_ModelMatrix;
  uniform mat4 u_MvpMatrix;
  uniform mat4 u_NormalMatrix;
+
  attribute vec4 a_Pos1;
  attribute vec3 a_Norm;
+
  varying vec3 v_Norm1;
  //
  void main() {
-   gl_Position = u_ModelMatrix * a_Pos1;
+
+    vec4 transVec = u_NormalMatrix * vec4(a_Norm, 0.0);
+    vec3 normVec  = normalize(transVec.xyz);
+    vec3 lightVec = vec3(0.0, 1.0, 0.0);
+
+    gl_Position = u_ModelMatrix * a_Pos1; // to prevent optimization 
     gl_Position = u_MvpMatrix * a_Pos1;
-    //gl_Position = u_ModelMatrix * u_NormalMatrix * u_MvpMatrix  * a_Pos1;
     v_Norm1 = a_Norm;
+    v_Norm1 = a_Norm * dot(normVec, lightVec);
+
   }`;
 
  this.FRAG_SRC = //---------------------- FRAGMENT SHADER source code 
@@ -818,8 +826,12 @@ VBObox1.prototype.adjust = function() {
   this.u_ModelMatrix.translate(0, -3.0, 1.0);	
   this.u_ModelMatrix.rotate(sphere_angle, 0, 0, 1);
 
+  // Normal Matrix = inverse transpose of modelMatrix
   this.u_NormalMatrix.setIdentity();
+  this.u_NormalMatrix.setInverseOf(this.u_ModelMatrix);
+  this.u_NormalMatrix.transpose();
 
+  // MVP Matrix
   this.u_MvpMatrix.set(g_worldMat);
   this.u_MvpMatrix.concat(this.u_ModelMatrix);
 // THIS DOESN'T WORK!!  this.ModelMatrix = g_worldMat;
