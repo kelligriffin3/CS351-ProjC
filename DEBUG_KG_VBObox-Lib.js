@@ -138,26 +138,6 @@ function VBObox0() {
     gl_FragColor = vec4(v_Colr0, 1.0);
   }`;
 
-	// this.vboContents = //---------------------------------------------------------
-	// new Float32Array ([						// Array of vertex attribute values we will
-  // 															// transfer to GPU's vertex buffer object (VBO)
-	// // 1st triangle:
-  // 	 0.0,	 0.0,	0.0, 1.0,		1.0, 1.0, 1.0, //1 vertex:pos x,y,z,w; color: r,g,b  X AXIS
-  //    1.0,  0.0, 0.0, 1.0,		1.0, 0.0, 0.0,
-     
-  // 	 0.0,	 0.0,	0.0, 1.0,		1.0, 1.0, 1.0, // Y AXIS
-  //    0.0,  1.0, 0.0, 1.0,		0.0, 1.0, 0.0,
-     
-  // 	 0.0,	 0.0,	0.0, 1.0,		1.0, 1.0, 1.0, // Z AXIS
-  //    0.0,  0.0, 1.0, 1.0,		0.0, 0.2, 1.0,
-     
-  //    // 2 long lines of the ground grid:
-  // 	 -100.0,   0.2,	0.0, 1.0,		1.0, 0.2, 0.0, // horiz line
-  //     100.0,   0.2, 0.0, 1.0,		0.0, 0.2, 1.0,
-  // 	  0.2,	-100.0,	0.0, 1.0,		0.0, 1.0, 0.0, // vert line
-  //     0.2,   100.0, 0.0, 1.0,		1.0, 0.0, 1.0,
-	// 	 ]);
-
   var axis_coords = new Float32Array ([						// Array of vertex attribute values we will
   															// transfer to GPU's vertex buffer object (VBO)
 	// 1st triangle:
