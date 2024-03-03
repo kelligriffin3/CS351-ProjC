@@ -491,20 +491,88 @@ function VBObox1() {
 // values here, in this one coonstrutor function, ensures we can change them 
 // easily WITHOUT disrupting any other code, ever!
   
-	this.VERT_SRC =	//--------------------- VERTEX SHADER source code 
- `precision highp float;				// req'd in OpenGL ES if we use 'float'
-  //
-  uniform mat4 u_ModelMatrix;
-  attribute vec4 a_Pos1;
-  attribute vec3 a_Colr1;
-  // attribute float a_PtSiz1; 
-  varying vec3 v_Colr1;
-  //
+// this.VERT_SRC =	//--------------------- VERTEX SHADER source code 
+//  `precision highp float;				// req'd in OpenGL ES if we use 'float'
+//   //
+//   ///uniform mat4 u_ModelMatrix;
+//   ///attribute vec4 a_Pos1;
+//   ///attribute vec3 a_Colr1;
+//   // attribute float a_PtSiz1; 
+//   ///varying vec3 v_Colr1;
+//   //
+//   void main() {
+//    // gl_PointSize = a_PtSiz1;
+//     gl_Position = u_ModelMatrix * a_Pos1;
+//   	 v_Colr1 = a_Colr1;
+// }`;
+
+this.VERT_SRC =
+ `attribute vec4 a_Pos1;
+   //  'attribute vec4 a_Color; // Defined constant in main()
+  attribute vec4 a_Colr1;
+  attribute vec4 a_Normal;
+  uniform mat4 u_MvpMatrix;
+  uniform mat4 u_ModelMatrix;    // Model matrix
+  uniform mat4 u_NormalMatrix;   // Transformation matrix of the normal
+  uniform vec3 u_LightColor;     // Light color
+  uniform vec3 u_LightPosition;  // Position of the light source
+  uniform vec3 u_AmbientLight;   // Ambient light color
+  varying vec4 v_Colr1;
   void main() {
-   // gl_PointSize = a_PtSiz1;
-    gl_Position = u_ModelMatrix * a_Pos1;
-  	 v_Colr1 = a_Colr1;
-   }`;
+    vec4 color = vec4(0.2, 1.0, 0.2, 1.0); // Sphere color
+    gl_Position = u_MvpMatrix * a_Pos1;
+     // Calculate a normal to be fit with a model matrix, and make it 1.0 in length
+    vec3 normal = normalize(vec3(u_NormalMatrix * a_Normal));
+     // Calculate world coordinate of vertex
+    vec4 vertexPosition = u_ModelMatrix * a_Pos1;
+     // Calculate the light direction and make it 1.0 in length
+    vec3 lightDirection = normalize(u_LightPosition - vec3(vertexPosition));
+     // The dot product of the light direction and the normal
+    float nDotL = max(dot(lightDirection, normal), 0.0);
+     // Calculate the color due to diffuse reflection
+    vec3 diffuse = u_LightColor * color.rgb * nDotL;
+     // Calculate the color due to ambient reflection
+    vec3 ambient = u_AmbientLight * color.rgb;
+     // Add the surface colors due to diffuse reflection and ambient reflection
+    v_Colr1 = vec4(diffuse + ambient, color.a);
+  }`;
+
+//   this.VERT_SRC =
+//  ` precision highp float;
+//    uniform mat4 u_ModelMatrix;
+//    attribute vec4 a_Pos1;
+//    attribute vec4 a_Colr1;
+//    varying vec4 v_Colr1;
+
+//    attribute vec4 a_Normal;
+//    uniform mat4 u_MvpMatrix;
+//    uniform mat4 u_NormalMatrix;
+//    uniform vec3 u_LightColor;
+//    uniform vec3 u_LightPosition;
+//    uniform vec3 u_AmbientLight;
+
+//    void main(){
+//     gl_Position = u_ModelMatrix * a_Pos1;
+//     v_Colr1 = a_Colr1;
+
+//     vec4 color = vec4(0.2, 1.0, 0.2, 1.0); // Sphere color
+//     gl_Position = u_MvpMatrix * a_Pos1;
+//      // Calculate a normal to be fit with a model matrix, and make it 1.0 in length
+//     vec3 normal = normalize(vec3(u_NormalMatrix * a_Normal));
+//      // Calculate world coordinate of vertex
+//     vec4 vertexPosition = u_ModelMatrix * a_Pos1;
+//      // Calculate the light direction and make it 1.0 in length
+//     vec3 lightDirection = normalize(u_LightPosition - vec3(vertexPosition));
+//      // The dot product of the light direction and the normal
+//     float nDotL = max(dot(lightDirection, normal), 0.0);
+//      // Calculate the color due to diffuse reflection
+//     vec3 diffuse = u_LightColor * color.rgb * nDotL;
+//      // Calculate the color due to ambient reflection
+//     vec3 ambient = u_AmbientLight * color.rgb;
+//      // Add the surface colors due to diffuse reflection and ambient reflection
+//     v_Colr1 = vec4(diffuse + ambient, color.a);
+//    }`;
+
 //========YOUR CHOICE OF 3 Fragment shader programs=======
 //				(use /* and */ to uncomment ONLY ONE)
 // Each is an example of how to use the built-in vars for gl.POINTS to
@@ -515,11 +583,12 @@ function VBObox1() {
 //   You too can be a 'shader writer'! What other fragment shaders would help?
 
  // a) SQUARE points:
-	this.FRAG_SRC = //---------------------- FRAGMENT SHADER source code 
+ this.FRAG_SRC = //---------------------- FRAGMENT SHADER source code 
  `precision mediump float;
-  varying vec3 v_Colr1;
+  varying vec4 v_Colr1;
   void main() {
-    gl_FragColor = vec4(v_Colr1, 1.0);
+    // gl_FragColor = vec4(v_Colr1, 1.0);
+    gl_FragColor = v_Colr1;
   }`;
 
 /*

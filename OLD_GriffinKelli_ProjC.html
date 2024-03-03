@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>CS351-ProjB</title>
+  </head>
+  <body onload="main()" onresize="drawResize()">
+    <canvas id="HTML5_canvas" width="400" height="400">
+      Please use a browser that supports HTML-5 "canvas" objects
+    </canvas>
+    
+    <p>
+     Use your arrow keys to change the tilt of the camera:
+      <ul>
+        <li>Up Arrow: look up</li>
+        <li>Down Arrow: look down</li>
+        <li>Right Arrow: look right</li>
+        <li>Left Arrow: look left</li>
+      </ul>
+      Use 'WASD' keys to move through the world:
+      <ul>
+        <li>W: move forward</li>
+        <li>A: move to the left</li>
+        <li>S: move backward</li>
+        <li>D: move to the right</li>
+      </ul>
+      <hr>
+  Drag your mouse to rotate the sphere! <br>
+  Click this button to reset the rotation. 
+  <button type="button" onclick="resetSphere()">Reset</button>
+  <hr>
+  Click this button to rotate the hand! Each click rotates the hand by 10 degrees.
+  <button type="button" onclick="rotateHand()">Rotate</button>
+  <hr>
+  Use these buttons to change the direction the diamond is spinning! Or you can stop the spin entirely. <br>
+	<button type="button" onclick="spinDownDiamond()">Spin << </button>
+	<button type="button" onclick="runStopDiamond()"> Run/Stop</button>
+	<button type="button" onclick="spinUpDiamond()">Spin >> </button>
+  <hr>
+    You can control the spin the robot!
+    Use these buttons to change the direction the robot is spinning! Or you can stop the spin entirely. <br>
+	<button type="button" onclick="spinDownRobot()">Spin << </button>
+	<button type="button" onclick="runStopRobot()"> Run/Stop</button>
+	<button type="button" onclick="spinUpRobot()">Spin >> </button>
+  <hr>
+  Stop the Robot's joints from moving. Click the buttons below to stop the joint. <br>
+  <button type="button" onclick="leg_stop()">Legs </button>
+  <button type="button" onclick="arm_stop()">Arms </button>
+  <button type="button" onclick="head_stop()">Head </button>
+
+
+		<! these commands create a push-button withlabels ++ CCW and -- CCW.
+			When users click the button, call the function name held in 'onclick'>
+    </p>
+    <script src="lib/webgl-utils.js"></script>
+    <script src="lib/webgl-debug.js"></script>
+    <script src="lib/cuon-utils.js"></script>
+    <script src="lib/cuon-matrix-quat03.js"></script>
+    <script src="OLD_GriffinKelli_ProjC.js"></script>
+  </body>
+</html>
