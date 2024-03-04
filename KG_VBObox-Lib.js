@@ -498,6 +498,8 @@ this.VERT_SRC =	//--------------------- VERTEX SHADER source code
  uniform mat4 u_MvpMatrix;
  uniform mat4 u_NormalMatrix;
 
+ uniform vec3 u_AmbientLight;   // Ambient light color
+
  attribute vec4 a_Pos1;
  attribute vec3 a_Norm;
 
@@ -574,7 +576,6 @@ this.VERT_SRC =	//--------------------- VERTEX SHADER source code
 								          //------Attribute locations in our shaders:
 	this.a_Pos1Loc;							  // GPU location: shader 'a_Pos1' attribute
 	this.a_NormLoc;							// GPU location: shader 'a_Norm' attribute
-  //this.a_NormalLoc;             // GPU location: shader 'a_Normal' attribute
 	
 	            //---------------------- Uniform locations &values in our shaders
 	this.u_ModelMatrix = new Matrix4();	// Transforms CVV axes to model axes.
@@ -586,13 +587,8 @@ this.VERT_SRC =	//--------------------- VERTEX SHADER source code
   this.u_MvpMatrix = new Matrix4();
   this.u_MvpMatrixLoc;
 
-  // this.MvpMatrix = new Matrix4();
-  // this.normalMatrix = new Matrix4();
-  // this.u_MvpMatrixLoc;
-  // this.u_NormalMatrixLoc;
-  // this.u_LightColorLoc;
-  // this.u_LightPositionLoc;
-  // this.u_AmbientLightLoc;
+  this.u_AmbientLight;
+  this.u_AmbientLightLoc;
 };
 
 
@@ -671,12 +667,7 @@ VBObox1.prototype.init = function() {
     return -1;	// error exit.
   }
 
-  // this.a_NormalLoc = gl.getAttribLocation(this.shaderLoc, 'a_Normal');
-  // if (!this.a_NormalLoc) { 
-  //   console.log(this.constructor.name + 
-  //   						'.init() failed to get GPU location for attribute a_Normal');
-  //   return;
-  // }
+  
 
   // c2) Find All Uniforms:-----------------------------------------------------
   //Get GPU storage location for each uniform var used in our shader programs: 
@@ -701,27 +692,12 @@ VBObox1.prototype.init = function() {
     return;
   }
 
-  // this.u_LightColorLoc = gl.getUniformLocation(this.shaderLoc, 'u_LightColor');
-  // if (!this.u_LightColorLoc) { 
-  //   console.log(this.constructor.name + 
-  //   						'.init() failed to get GPU location for u_LightColor uniform');
-  //   return;
-  // }
-
-  // this.u_LightPositionLoc = gl.getUniformLocation(this.shaderLoc, 'u_LightPosition');
-  // if (!this.u_LightPositionLoc) { 
-  //   console.log(this.constructor.name + 
-  //   						'.init() failed to get GPU location for u_LightPosition uniform');
-  //   return;
-  // }
-
-  // this.u_AmbientLightLoc = gl.getUniformLocation(this.shaderLoc, 'u_AmbientLight');
-  // if (!this.u_AmbientLightLoc) { 
-  //   console.log(this.constructor.name + 
-  //   						'.init() failed to get GPU location for u_AmbientLight uniform');
-  //   return;
-  // }
-
+  this.u_AmbientLightLoc = gl.getUniformLocation(this.shaderLoc, 'u_AmbientLight');
+  if (!this.u_AmbientLightLoc) { 
+    console.log(this.constructor.name + 
+    						'.init() failed to get GPU location for u_AmbientLight uniform');
+    return;
+  }
 
 }
 
@@ -834,8 +810,12 @@ VBObox1.prototype.adjust = function() {
   // MVP Matrix
   this.u_MvpMatrix.set(g_worldMat);
   this.u_MvpMatrix.concat(this.u_ModelMatrix);
-// THIS DOESN'T WORK!!  this.ModelMatrix = g_worldMat;
- // this.ModelMatrix.set(g_worldMat);
+
+  // Set the ambient light uniform
+  gl.uniform3f(this.u_AmbientLight, 
+                              0.2, 
+                              0.2, 
+                              0.2);
 
   //  Transfer new uniforms' values to the GPU:-------------
   // Send  new 'ModelMat' values to the GPU's 'u_ModelMat1' uniform: 
@@ -850,7 +830,6 @@ VBObox1.prototype.adjust = function() {
   gl.uniformMatrix4fv(this.u_MvpMatrixLoc,	// GPU location of the uniform
   										false, 										// use matrix transpose instead?
   										this.u_MvpMatrix.elements);	// send data from Javascript.
-
 }
 
 VBObox1.prototype.draw = function() {
