@@ -513,49 +513,49 @@ this.VERT_SRC =	//--------------------- VERTEX SHADER source code
  //
  void main() {
 
-    gl_Position = u_MvpMatrix * a_Pos1;
+  gl_Position = u_MvpMatrix * a_Pos1;
 
-    // Calculate world coordinate system
-    vertPos = vec3(u_ModelMatrix * a_Pos1);
+  // Calculate world coordinate system
+  vertPos = vec3(u_ModelMatrix * a_Pos1);
 
-    vec4 transVec = u_NormalMatrix * vec4(a_Norm, 0.0);
-    vec3 normVec  = normalize(transVec.xyz);
-    vec3 lightVec = normalize(u_LightPos.xyz - vertPos.xyz);  // Light direction
-    vec3 V = normalize(-vertPos);                             // View direction
+  vec4 transVec = u_NormalMatrix * vec4(a_Norm, 0.0);
+  vec3 normVec  = normalize(transVec.xyz);
+  vec3 lightVec = normalize(u_LightPos.xyz - vertPos.xyz);  // Light direction
+  vec3 V = normalize(u_eyePosWorld - vertPos);                             // View direction
 
-    // Specular highlight for phong and blinn phong
-    float nDotL = max(dot(lightVec, normVec), 0.0); // For phong
+  // Specular highlight for phong and blinn phong
+  float nDotL = max(dot(lightVec, normVec), 0.0); // For phong
 
-    vec3 eyeDirection = normalize(u_eyePosWorld.xyz - vertPos.xyz); 
-	  vec3 H = normalize(lightVec + eyeDirection); 
-    float nDotH = max(dot(H, normVec), 0.0);       // For blinn-phong
+  vec3 eyeDirection = normalize(u_eyePosWorld.xyz - vertPos.xyz); 
+  vec3 H = normalize(lightVec + eyeDirection); 
+  float nDotH = max(dot(H, normVec), 0.0);       // For blinn-phong
 
-    float currSpec;// = nDotH;
-    if (isBlinn){
-        currSpec = nDotH;
-    }else{
-        currSpec = nDotL;
-    };
+  float currSpec;// = nDotH;
+  if (isBlinn){
+      currSpec = nDotH;
+  }else{
+      currSpec = nDotL;
+  };
 
-    // calculate the specular term
-    vec3 v_specTerm = reflect(- lightVec, normVec);   
+  // calculate the specular term
+  vec3 v_specTerm = reflect(- lightVec, normVec);   
 
-    // Calculate ambient 
-    vec3 ambient = u_AmbientLight * u_Diffuse;
+  // Calculate ambient 
+  vec3 ambient = u_AmbientLight * u_Diffuse;
 
-    // Calculate diffuse
-    vec3 diffuse = currSpec * u_Diffuse;
+  // Calculate diffuse
+  vec3 diffuse = currSpec * u_Diffuse;
 
-    // Calculate specular
-    //float spec = pow(max(dot(V, v_specTerm), 0.0), 64.0);
-    float spec = pow(currSpec, 32.0);
-    vec3 specular = u_Spec * spec;
+  // Calculate specular
+  //float spec = pow(max(dot(V, v_specTerm), 0.0), 64.0);
+  float spec = pow(currSpec, 32.0);
+  vec3 specular = u_Spec * spec;
 
-    // color to send to fragment shader
-    v_Norm1 = vec3(ambient + diffuse + specular);
-    // v_Norm1 = a_Norm * dot(normVec, lightVec);  // Old code from diffuse only
+  // color to send to fragment shader
+  v_Norm1 = vec3(ambient + diffuse + specular);
+  // v_Norm1 = a_Norm * dot(normVec, lightVec);  // Old code from diffuse only
 
-  }`;
+}`;
 
  this.FRAG_SRC = //---------------------- FRAGMENT SHADER source code 
  `precision mediump float;
@@ -563,9 +563,9 @@ this.VERT_SRC =	//--------------------- VERTEX SHADER source code
   varying vec3 v_Norm1;
   void main() {
     //gl_FragColor = vec4(v_Norm1.z, v_Norm1.z, v_Norm1.z, 1.0);
-    gl_FragColor = vec4(v_Norm1, 1.0);
+     gl_FragColor = vec4(v_Norm1, 1.0);
+  
   }`;
-
 
   makeSphere();
   this.vboContents = sphVerts;
@@ -635,7 +635,7 @@ this.VERT_SRC =	//--------------------- VERTEX SHADER source code
   this.u_Diffuse;
   this.u_DiffuseLoc;
 
-  this.u_LightPos;
+  //this.u_LightPos;
   this.u_LightPosLoc;
 
   this.isBlinn;
@@ -888,13 +888,20 @@ VBObox1.prototype.adjust = function() {
   }
 	// Adjust values for our uniforms,
 	this.u_ModelMatrix.setIdentity();
-  this.u_ModelMatrix.translate(0, -3.0, 1.0);	
-  this.u_ModelMatrix.rotate(sphere_angle, 0, 0, 1);
+  //this.u_ModelMatrix.translate(0, -3.0, 1.0);	
+  //this.u_ModelMatrix.translate(0, 0.0, 0.0);	
+  
 
   // Normal Matrix = inverse transpose of modelMatrix
   this.u_NormalMatrix.setIdentity();
   this.u_NormalMatrix.setInverseOf(this.u_ModelMatrix);
   this.u_NormalMatrix.transpose();
+
+  this.u_ModelMatrix.translate(0, -3.0, 1.0);	
+  this.u_NormalMatrix.translate(0, -3.0, 1.0);	
+
+  this.u_NormalMatrix.rotate(sphere_angle, 0, 0, 1);
+  this.u_ModelMatrix.rotate(sphere_angle, 0, 0, 1);
 
   // MVP Matrix
   this.u_MvpMatrix.set(g_worldMat);
