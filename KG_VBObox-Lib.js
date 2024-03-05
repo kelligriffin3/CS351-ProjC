@@ -497,24 +497,63 @@ this.VERT_SRC =	//--------------------- VERTEX SHADER source code
  uniform mat4 u_ModelMatrix;
  uniform mat4 u_MvpMatrix;
  uniform mat4 u_NormalMatrix;
-
  uniform vec3 u_AmbientLight;   // Ambient light color
+ uniform vec3 u_Spec;           // Specular term
+ uniform vec3 u_Diffuse;        // Diffuse
+ uniform vec3 u_LightPos;
+ uniform bool isBlinn;
+ uniform vec3 u_eyePosWorld;
 
  attribute vec4 a_Pos1;
  attribute vec3 a_Norm;
 
  varying vec3 v_Norm1;
+ varying vec3 v_kd;           // Find diffuse reflectance K_d per pix
+ varying vec3 vertPos; 
  //
  void main() {
 
+    gl_Position = u_MvpMatrix * a_Pos1;
+
+    // Calculate world coordinate system
+    vertPos = vec3(u_ModelMatrix * a_Pos1);
+
     vec4 transVec = u_NormalMatrix * vec4(a_Norm, 0.0);
     vec3 normVec  = normalize(transVec.xyz);
-    vec3 lightVec = vec3(0.0, 1.0, 0.0);
+    vec3 lightVec = normalize(u_LightPos.xyz - vertPos.xyz);  // Light direction
+    vec3 V = normalize(-vertPos);                             // View direction
 
-    gl_Position = u_ModelMatrix * a_Pos1; // to prevent optimization 
-    gl_Position = u_MvpMatrix * a_Pos1;
-    v_Norm1 = a_Norm;
-    v_Norm1 = a_Norm * dot(normVec, lightVec);
+    // Specular highlight for phong and blinn phong
+    float nDotL = max(dot(lightVec, normVec), 0.0); // For phong
+
+    vec3 eyeDirection = normalize(u_eyePosWorld.xyz - vertPos.xyz); 
+	  vec3 H = normalize(lightVec + eyeDirection); 
+    float nDotH = max(dot(H, normVec), 0.0);       // For blinn-phong
+
+    float currSpec;// = nDotH;
+    if (isBlinn){
+        currSpec = nDotH;
+    }else{
+        currSpec = nDotL;
+    };
+
+    // calculate the specular term
+    vec3 v_specTerm = reflect(- lightVec, normVec);   
+
+    // Calculate ambient 
+    vec3 ambient = u_AmbientLight * u_Diffuse;
+
+    // Calculate diffuse
+    vec3 diffuse = currSpec * u_Diffuse;
+
+    // Calculate specular
+    //float spec = pow(max(dot(V, v_specTerm), 0.0), 64.0);
+    float spec = pow(currSpec, 32.0);
+    vec3 specular = u_Spec * spec;
+
+    // color to send to fragment shader
+    v_Norm1 = vec3(ambient + diffuse + specular);
+    // v_Norm1 = a_Norm * dot(normVec, lightVec);  // Old code from diffuse only
 
   }`;
 
@@ -523,8 +562,8 @@ this.VERT_SRC =	//--------------------- VERTEX SHADER source code
 
   varying vec3 v_Norm1;
   void main() {
-     gl_FragColor = vec4(v_Norm1.z, v_Norm1.z, v_Norm1.z, 1.0);
-    //gl_FragColor = v_Colr1;
+    //gl_FragColor = vec4(v_Norm1.z, v_Norm1.z, v_Norm1.z, 1.0);
+    gl_FragColor = vec4(v_Norm1, 1.0);
   }`;
 
 
@@ -589,6 +628,21 @@ this.VERT_SRC =	//--------------------- VERTEX SHADER source code
 
   this.u_AmbientLight;
   this.u_AmbientLightLoc;
+
+  this.u_Spec;
+  this.u_specLoc;
+
+  this.u_Diffuse;
+  this.u_DiffuseLoc;
+
+  this.u_LightPos;
+  this.u_LightPosLoc;
+
+  this.isBlinn;
+  this.isBlinnLoc;
+
+  this.u_eyePosWorld;
+  this.u_eyePosWorldLoc;
 };
 
 
@@ -696,6 +750,41 @@ VBObox1.prototype.init = function() {
   if (!this.u_AmbientLightLoc) { 
     console.log(this.constructor.name + 
     						'.init() failed to get GPU location for u_AmbientLight uniform');
+    return;
+  }
+
+  this.u_SpecLoc = gl.getUniformLocation(this.shaderLoc, 'u_Spec');
+  if (!this.u_SpecLoc) { 
+    console.log(this.constructor.name + 
+    						'.init() failed to get GPU location for u_Spec uniform');
+    return;
+  }
+
+  this.u_DiffuseLoc = gl.getUniformLocation(this.shaderLoc, 'u_Diffuse');
+  if (!this.u_DiffuseLoc) { 
+    console.log(this.constructor.name + 
+    						'.init() failed to get GPU location for u_Diffuse uniform');
+    return;
+  }
+
+  this.u_LightPosLoc = gl.getUniformLocation(this.shaderLoc, 'u_LightPos');
+  if (!this.u_LightPosLoc) { 
+    console.log(this.constructor.name + 
+    						'.init() failed to get GPU location for u_LightPos uniform');
+    return;
+  }
+
+  this.isBlinnLoc = gl.getUniformLocation(this.shaderLoc, 'isBlinn');
+  if (!this.isBlinnLoc) { 
+    console.log(this.constructor.name + 
+    						'.init() failed to get GPU location for isBlinn uniform');
+    return;
+  }
+
+  this.u_eyePosWorldLoc = gl.getUniformLocation(this.shaderLoc, 'u_eyePosWorld');
+  if (!this.u_eyePosWorldLoc) { 
+    console.log(this.constructor.name + 
+    						'.init() failed to get GPU location for u_eyePosWorld uniform');
     return;
   }
 
@@ -817,12 +906,43 @@ VBObox1.prototype.adjust = function() {
                               0.2, 
                               0.2);
 
+  // Set the specular term
+  gl.uniform3f(this.u_SpecLoc, 
+                          1.0, 
+                          1.0, 
+                          1.0);	
+
+  // Set the diffuse term
+  gl.uniform3f(this.u_DiffuseLoc, 
+                          1.0, 
+                          0.0, 
+                          0.0);	
+
+  // Set the light position
+  gl.uniform3f(this.u_LightPosLoc, 
+                            0.0, 
+                            1.0, 
+                            0.0);
+
+  gl.uniform3f(this.u_eyePosWorldLoc, 
+                            eye_x, 
+                            eye_y, 
+                            eye_z);	
+                 
+
+  if (isBlinn1 == true){ // blinn
+    gl.uniform1i(this.isBlinnLoc, 1);	
+  } else{ // not blinn
+    gl.uniform1i(this.isBlinnLoc, 0);	
+  }     
+               
+
   //  Transfer new uniforms' values to the GPU:-------------
   // Send  new 'ModelMat' values to the GPU's 'u_ModelMat1' uniform: 
   gl.uniformMatrix4fv(this.u_ModelMatrixLoc,	// GPU location of the uniform
   										false, 										// use matrix transpose instead?
   										this.u_ModelMatrix.elements);	// send data from Javascript.
-
+                      
   gl.uniformMatrix4fv(this.u_NormalMatrixLoc,	// GPU location of the uniform
   										false, 										// use matrix transpose instead?
   										this.u_NormalMatrix.elements);	// send data from Javascript.
@@ -830,6 +950,7 @@ VBObox1.prototype.adjust = function() {
   gl.uniformMatrix4fv(this.u_MvpMatrixLoc,	// GPU location of the uniform
   										false, 										// use matrix transpose instead?
   										this.u_MvpMatrix.elements);	// send data from Javascript.
+
 }
 
 VBObox1.prototype.draw = function() {

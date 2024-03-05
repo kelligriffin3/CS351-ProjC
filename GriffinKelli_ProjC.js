@@ -116,6 +116,9 @@ var g_posMin1 = -1.0;
 // For sphere animation
 var sphere_angle = 0.0;
 
+// For blinn Phong VBO1
+var isBlinn1 = false;
+
 // For mouse/keyboard:------------------------
 var g_show0 = 1;								// 0==Show, 1==Hide VBO0 contents on-screen.
 var g_show1 = 1;								// 	"					"			VBO1		"				"				" 
@@ -549,4 +552,22 @@ function drawResize() {
 	//draw();				// draw in all viewports.
   setCamera();
 	drawAll();
+}
+
+function blinn1switch(){
+  console.log("switching to/from blinn phong");
+  console.log("old blinn: ")
+  console.log(isBlinn1);
+
+  if (isBlinn1 == true){
+    isBlinn1 = false;
+  } else{
+    isBlinn1 = true;
+  }
+  console.log("new blinn: ")
+  console.log(isBlinn1);
+
+  // dispay the current state on screen
+  document.getElementById('VBO-1-is-blinn').innerHTML= 
+														 'Is Blinn  = ' + isBlinn1;
 }
