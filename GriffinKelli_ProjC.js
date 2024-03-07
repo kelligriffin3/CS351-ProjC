@@ -135,9 +135,9 @@ g_worldMat = new Matrix4();				// Changes CVV drawing axes to 'world' axes.
 
 // VARS FOR CAMERA MOVEMENT
 var eye_x = 0; 
-var eye_y = 6;
+var eye_y = 9;
 var eye_z = 3;
-var theta = -1.5;
+var theta = -1.6;
 // var eye_x = 5; 
 // var eye_y = 5;
 // var eye_z = 3;
