@@ -932,8 +932,8 @@ VBObox1.prototype.adjust = function() {
   // Set the light position
   gl.uniform3f(this.u_LightPosLoc, 
                             0.0, 
-                            0.0, 
-                            1000.0);
+                            1000.0, 
+                            0.0);
 
   gl.uniform3f(this.u_eyePosWorldLoc, 
                             eye_x, 
@@ -1046,15 +1046,15 @@ function VBObox2() {
  `precision highp float;				// req'd in OpenGL ES if we use 'float'
   //
   uniform mat4 u_ModelMatrix;
+  
   attribute vec4 a_Position;
-  attribute vec3 a_Color;
-  attribute float a_PtSize; 
+  attribute vec3 a_Norm;
+
   varying vec3 v_Colr;
   //
   void main() {
-    gl_PointSize = a_PtSize;
     gl_Position = u_ModelMatrix * a_Position;
-  	 v_Colr = a_Color;
+  	 v_Colr = a_Norm;
    }`;
 
 	this.FRAG_SRC = //---------------------- FRAGMENT SHADER source code 
@@ -1065,17 +1065,10 @@ function VBObox2() {
 //  gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
   }`;
 
-	this.vboContents = //---------------------------------------------------------
-		new Float32Array ([					// Array of vertex attribute values we will
-  															// transfer to GPU's vertex buffer object (VBO)
-			// 1 vertex per line: pos x,y,z,w;   color; r,g,b;   point-size; 
-  	-0.3,  0.5,	0.0, 1.0,		1.0, 0.3, 0.3,   7.0,   // (bright red)
-    -0.3, -0.3, 0.0, 1.0,		0.3, 1.0, 0.3,  14.0,   // (bright green)
-     0.3, -0.3, 0.0, 1.0,		0.3, 0.3, 1.0,  21.0,   // (bright blue)
-     0.3,  0.3, 0.0, 1.0,   0.5, 0.5, 0.5,  18.0,   // (gray)
-  ]);
-	
-	this.vboVerts = 4;							// # of vertices held in 'vboContents' array;
+  makeSphere();
+  this.vboContents = sphVerts;
+				
+  this.vboVerts = sphVerts.length / 7; // # of vertices held in 'vboContents' array;
 	this.FSIZE = this.vboContents.BYTES_PER_ELEMENT;
 	                              // bytes req'd by 1 vboContents array element;
 																// (why? used to compute stride and offset 
@@ -1092,21 +1085,15 @@ function VBObox2() {
 	            //----------------------Attribute sizes
   this.vboFcount_a_Position = 4;  // # of floats in the VBO needed to store the
                                 // attribute named a_Position (4: x,y,z,w values)
-  this.vboFcount_a_Color = 3;   // # of floats for this attrib (r,g,b values)
-  this.vboFcount_a_PtSize = 1;  // # of floats for this attrib (just one!)
+  this.vboFcount_a_Norm = 3;   // # of floats for this attrib (r,g,b values)
                //----------------------Attribute offsets
 	this.vboOffset_a_Position = 0;   
 	                              //# of bytes from START of vbo to the START
 	                              // of 1st a_Position attrib value in vboContents[]
-  this.vboOffset_a_Color = (this.vboFcount_a_Position) * this.FSIZE;  
+  this.vboOffset_a_Norm = (this.vboFcount_a_Position) * this.FSIZE;  
                                 // == 4 floats * bytes/float
                                 //# of bytes from START of vbo to the START
                                 // of 1st a_Color attrib value in vboContents[]
-  this.vboOffset_a_PtSize = (this.vboFcount_a_Position +
-                             this.vboFcount_a_Color) * this.FSIZE; 
-                                // == 7 floats * bytes/float
-                                // # of bytes from START of vbo to the START
-                                // of 1st a_PtSize attrib value in vboContents[]
                                 
 	            //-----------------------GPU memory locations:
 	this.vboLoc;									// GPU Location for Vertex Buffer Object, 
@@ -1115,8 +1102,7 @@ function VBObox2() {
 	                            	// set by compile/link of VERT_SRC and FRAG_SRC.
 								          //------Attribute locations in our shaders:
 	this.a_PositionLoc;							// GPU location: shader 'a_Position' attribute
-	this.a_ColorLoc;								// GPU location: shader 'a_Color' attribute
-	this.a_PtSizeLoc;								// GPU location: shader 'a_PtSize' attribute
+	this.a_NormLoc;								// GPU location: shader 'a_Color' attribute
 	
 	            //---------------------- Uniform locations &values in our shaders
 	this.ModelMatrix = new Matrix4();	// Transforms CVV axes to model axes.
@@ -1191,18 +1177,18 @@ VBObox2.prototype.init = function() {
     						'.init() Failed to get GPU location of attribute a_Position');
     return -1;	// error exit.
   }
- 	this.a_ColorLoc = gl.getAttribLocation(this.shaderLoc, 'a_Color');
-  if(this.a_ColorLoc < 0) {
+ 	this.a_NormLoc = gl.getAttribLocation(this.shaderLoc, 'a_Norm');
+  if(this.a_NormLoc < 0) {
     console.log(this.constructor.name + 
     						'.init() failed to get the GPU location of attribute a_Color');
     return -1;	// error exit.
   }
-  this.a_PtSizeLoc = gl.getAttribLocation(this.shaderLoc, 'a_PtSize');
-  if(this.a_PtSizeLoc < 0) {
-    console.log(this.constructor.name + 
-	    					'.init() failed to get the GPU location of attribute a_PtSize');
-	  return -1;	// error exit.
-  }
+  // this.a_PtSizeLoc = gl.getAttribLocation(this.shaderLoc, 'a_PtSize');
+  // if(this.a_PtSizeLoc < 0) {
+  //   console.log(this.constructor.name + 
+	//     					'.init() failed to get the GPU location of attribute a_PtSize');
+	//   return -1;	// error exit.
+  // }
   // c2) Find All Uniforms:-----------------------------------------------------
   //Get GPU storage location for each uniform var used in our shader programs: 
  this.u_ModelMatrixLoc = gl.getUniformLocation(this.shaderLoc, 'u_ModelMatrix');
@@ -1260,16 +1246,16 @@ VBObox2.prototype.switchToMe = function() {
 		this.vboOffset_a_Position);	
 		              // Offset == how many bytes from START of buffer to the first
   								// value we will actually use?  (We start with a_Position).
-  gl.vertexAttribPointer(this.a_ColorLoc, this.vboFcount_a_Color, 
+  gl.vertexAttribPointer(this.a_NormLoc, this.vboFcount_a_Norm, 
               gl.FLOAT, false, 
-  						this.vboStride, this.vboOffset_a_Color);
-  gl.vertexAttribPointer(this.a_PtSizeLoc, this.vboFcount_a_PtSize, 
-              gl.FLOAT, false, 
-							this.vboStride, this.vboOffset_a_PtSize);
+  						this.vboStride, this.vboOffset_a_Norm);
+  // gl.vertexAttribPointer(this.a_PtSizeLoc, this.vboFcount_a_PtSize, 
+  //             gl.FLOAT, false, 
+	// 						this.vboStride, this.vboOffset_a_PtSize);
 // --Enable this assignment of each of these attributes to its' VBO source:
   gl.enableVertexAttribArray(this.a_PositionLoc);
-  gl.enableVertexAttribArray(this.a_ColorLoc);
-  gl.enableVertexAttribArray(this.a_PtSizeLoc);
+  gl.enableVertexAttribArray(this.a_NormLoc);
+  // gl.enableVertexAttribArray(this.a_PtSizeLoc);
 }
 
 VBObox2.prototype.isReady = function() {
@@ -1309,20 +1295,13 @@ VBObox2.prototype.adjust = function() {
   this.ModelMatrix.set(g_worldMat);
 	// Ready to draw in World coord axes.
 
-  this.ModelMatrix.translate(-0.3, 0.0, 0.0); //Shift origin leftwards,
+  // this.ModelMatrix.translate(-0.3, 0.0, 0.0); //Shift origin leftwards,
   this.ModelMatrix.rotate(g_angleNow2, 0, 0, 1);	// -spin drawing axes,
   //  Transfer new uniforms' values to the GPU:--------------------------------
   // Send  new 'ModelMat' values to the GPU's 'u_ModelMat1' uniform: 
   gl.uniformMatrix4fv(this.u_ModelMatrixLoc,	  // GPU location of the uniform
   										false, 										// use matrix transpose instead?
   										this.ModelMatrix.elements);	// send data from Javascript.
-  // Adjust values in VBOcontents array-----------------------------------------
-  // Make one dot-size grow/shrink;
-  this.vboContents[15] = 15.0*(1.0 + Math.cos(Math.PI * 3.0 * g_angleNow1 / 180.0)); // radians
-  // change y-axis value of 1st vertex
-  this.vboContents[1] = g_posNow0;
-  // Transfer new VBOcontents to GPU-------------------------------------------- 
-  this.reload();
 }
 
 VBObox2.prototype.draw = function() {
@@ -1335,15 +1314,11 @@ VBObox2.prototype.draw = function() {
   }
 	
   // ----------------------------Draw the contents of the currently-bound VBO:
-  gl.drawArrays(gl.POINTS, 		    // select the drawing primitive to draw,
+  gl.drawArrays(gl.TRIANGLE_STRIP, 		    // select the drawing primitive to draw,
                   // choices: gl.POINTS, gl.LINES, gl.LINE_STRIP, gl.LINE_LOOP, 
                   //          gl.TRIANGLES, gl.TRIANGLE_STRIP, ...
   							0, 								// location of 1st vertex to draw;
   							this.vboVerts);		// number of vertices to draw on-screen.
-
-  gl.drawArrays(gl.LINE_LOOP,     // draw lines between verts too!
-                0,
-                this.vboVerts);
 }
 
 VBObox2.prototype.reload = function() {
