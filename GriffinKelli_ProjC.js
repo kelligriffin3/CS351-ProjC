@@ -121,8 +121,8 @@ var isBlinn1 = false;
 
 // For mouse/keyboard:------------------------
 var g_show0 = 1;								// 0==Show, 1==Hide VBO0 contents on-screen.
-var g_show1 = 1;								// 	"					"			VBO1		"				"				" 
-var g_show2 = 0;                //  "         "     VBO2    "       "       "
+var g_show1 = 0;								// 	"					"			VBO1		"				"				" 
+var g_show2 = 1;                //  "         "     VBO2    "       "       "
 
 // GLOBAL CAMERA CONTROL:					// 
 g_worldMat = new Matrix4();				// Changes CVV drawing axes to 'world' axes.
@@ -604,7 +604,7 @@ function drawResize() {
 				
 	//Make canvas fill the top 2/3 of our browser window:
 	var xtraMargin = 16; 
-	g_canvasID.width = innerWidth - (xtraMargin * 2);
+	g_canvasID.width = innerWidth - xtraMargin;
 	g_canvasID.height = (innerHeight*7/10) - xtraMargin;
 	// IMPORTANT!  Need a fresh drawing in the re-sized viewports.
 	//draw();				// draw in all viewports.
