@@ -121,8 +121,8 @@ var isBlinn1 = false;
 
 // For mouse/keyboard:------------------------
 var g_show0 = 1;								// 0==Show, 1==Hide VBO0 contents on-screen.
-var g_show1 = 0;								// 	"					"			VBO1		"				"				" 
-var g_show2 = 1;                //  "         "     VBO2    "       "       "
+var g_show1 = 1;								// 	"					"			VBO1		"				"				" 
+var g_show2 = 0;                //  "         "     VBO2    "       "       "
 
 // GLOBAL CAMERA CONTROL:					// 
 g_worldMat = new Matrix4();				// Changes CVV drawing axes to 'world' axes.
@@ -332,11 +332,8 @@ var b4Wait = b4Draw - g_lastMS;
   }
   if(g_show1 == 1) { // IF user didn't press HTML button to 'hide' VBO1:
     gouraudBox.switchToMe();  // Set WebGL to render from this VBObox.
-  	gouraudBox.adjustSphere();		  // Send new values for uniforms to the GPU, and
-  	gouraudBox.drawSphere();			  // draw our VBO's contents using our shaders.
-
-    // gouraudBox.adjustTower();
-    // gouraudBox.drawTower();
+  	gouraudBox.adjust();		  // Send new values for uniforms to the GPU, and
+  	gouraudBox.draw();			  // draw our VBO's contents using our shaders.
 
 	  }
 	if(g_show2 == 1) { // IF user didn't press HTML button to 'hide' VBO2:

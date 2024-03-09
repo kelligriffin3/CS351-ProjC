@@ -508,12 +508,12 @@ function VBObox0() {
    uniform mat4 u_MvpMatrix;
    uniform mat4 u_NormalMatrix;
    uniform vec3 u_AmbientLight;   // Ambient light color
-   uniform vec3 u_Spec;           // Specular term
+   uniform vec3 u_SpecLight;           // Specular term
    uniform vec3 u_Diffuse;        // Diffuse
    uniform vec3 u_LightPos;
    uniform bool isBlinn;
    uniform vec3 u_eyePosWorld;
-  //  uniform MatlT u_MatlSet[1];
+   uniform MatlT u_MatlSet[1];
   
    attribute vec4 a_Pos1;
    attribute vec3 a_Norm;
@@ -554,24 +554,16 @@ function VBObox0() {
     }else{
         currSpec = vDotR;
     };
-  
-    // calculate the specular term
-    vec3 v_specTerm = reflect(- lightVec, normVec);   // R in equation
-  
-    // Calculate ambient 
-    vec3 ambient = u_AmbientLight * u_Diffuse;
-  
-    // Calculate diffuse
-    vec3 diffuse = nDotL * u_Diffuse;
-  
-    // Calculate specular
-    //float spec = pow(max(dot(V, v_specTerm), 0.0), 64.0);
-    float spec = pow(currSpec, 32.0);  // 32 is shininess
-    vec3 specular = u_Spec * spec;
-  
-    // color to send to fragment shader
-    v_Color = vec3(ambient + diffuse + specular);
-    //v_Color = a_Norm * dot(normVec, lightVec);  // Old code from diffuse only
+
+    //
+
+    float e64 = pow(currSpec, float(u_MatlSet[0].shiny));
+
+    vec3 emissive = u_MatlSet[0].emit;
+    vec3 ambient = u_AmbientLight * u_MatlSet[0].ambi;
+    vec3 diffuse = u_Diffuse * u_MatlSet[0].diff * nDotL;
+    vec3 speculr = u_SpecLight * u_MatlSet[0].spec * e64;
+    v_Color = vec3(emissive + ambient + diffuse + speculr);
   
   }`;
   
@@ -655,7 +647,7 @@ function VBObox0() {
     this.u_AmbientLightLoc;
   
     this.u_Spec;
-    this.u_specLoc;
+    this.u_SpecLoc;
   
     this.u_Diffuse;
     this.u_DiffuseLoc;
@@ -778,10 +770,10 @@ function VBObox0() {
       return;
     }
   
-    this.u_SpecLoc = gl.getUniformLocation(this.shaderLoc, 'u_Spec');
+    this.u_SpecLoc = gl.getUniformLocation(this.shaderLoc, 'u_SpecLight');
     if (!this.u_SpecLoc) { 
       console.log(this.constructor.name + 
-                  '.init() failed to get GPU location for u_Spec uniform');
+                  '.init() failed to get GPU location for u_SpecLight uniform AH');
       return;
     }
   
@@ -811,6 +803,18 @@ function VBObox0() {
       console.log(this.constructor.name + 
                   '.init() failed to get GPU location for u_eyePosWorld uniform');
       return;
+    }
+
+    this.KeLoc = gl.getUniformLocation(this.shaderLoc, 'u_MatlSet[0].emit');
+	  this.KaLoc = gl.getUniformLocation(this.shaderLoc, 'u_MatlSet[0].ambi');
+	  this.KdLoc = gl.getUniformLocation(this.shaderLoc, 'u_MatlSet[0].diff');
+	  this.KsLoc = gl.getUniformLocation(this.shaderLoc, 'u_MatlSet[0].spec');
+	  this.KShinyLoc = gl.getUniformLocation(this.shaderLoc, 'u_MatlSet[0].shiny');
+	  if(!this.KeLoc || !this.KaLoc || !this.KdLoc  || !this.KsLoc || !this.KShinyLoc) {
+		  console.log('Failed to get GPUs Reflectance storage locations');
+		  return;
+	  } else{
+      console.log("All found!!");
     }
   
   }
@@ -898,7 +902,7 @@ function VBObox0() {
     return isOK;
   }
   
-  VBObox1.prototype.adjustSphere = function() {
+  VBObox1.prototype.adjust = function() {
   //==============================================================================
   // Update the GPU to newer, current values we now store for 'uniform' vars on 
   // the GPU; and (if needed) update each attribute's stride and offset in VBO.
@@ -931,13 +935,15 @@ function VBObox0() {
     // console.log(this.u_ModelMatrix);
   
     // Set the ambient light uniform
-    gl.uniform3f(this.u_AmbientLight, 0.2, 0.2, 0.2);
+    // gl.uniform3f(this.u_AmbientLight, 0.2, 0.2, 0.2);
+    gl.uniform3f(this.u_AmbientLight, 0.4, 0.4, 0.4);
   
     // Set the specular term
     gl.uniform3f(this.u_SpecLoc, 1.0, 1.0, 1.0);	
   
     // Set the diffuse term
-    gl.uniform3f(this.u_DiffuseLoc, 1.0, 0.0, 0.0);	
+    // gl.uniform3f(this.u_DiffuseLoc, 1.0, 0.0, 0.0);	
+    gl.uniform3f(this.u_DiffuseLoc, 1.0, 1.0, 1.0);	
   
     // Set the light position
     gl.uniform3f(this.u_LightPosLoc, 0.0, 1000.0, 0.0);
@@ -965,10 +971,17 @@ function VBObox0() {
     gl.uniformMatrix4fv(this.u_MvpMatrixLoc,	// GPU location of the uniform
                         false, 										// use matrix transpose instead?
                         this.u_MvpMatrix.elements);	// send data from Javascript.
+
+        // Set material attributes
+    gl.uniform3fv(this.KeLoc, matl0.K_emit.slice(0,3));				// Ke emissive
+    gl.uniform3fv(this.KaLoc, matl0.K_ambi.slice(0,3));				// Ka ambient
+    gl.uniform3fv(this.KdLoc, matl0.K_diff.slice(0,3));				// Kd	diffuse
+    gl.uniform3fv(this.KsLoc, matl0.K_spec.slice(0,3));				// Ks specular
+    gl.uniform1i(this.KShinyLoc, parseInt(matl0.K_shiny, 10));     // Kshiny
   
   }
   
-  VBObox1.prototype.drawSphere = function() {
+  VBObox1.prototype.draw = function() {
   //=============================================================================
   // Send commands to GPU to select and render current VBObox contents.
   
@@ -989,112 +1002,6 @@ function VBObox0() {
     
   }
 
-  VBObox1.prototype.adjustTower = function() {
-  //==============================================================================
-  // Update the GPU to newer, current values we now store for 'uniform' vars on 
-  // the GPU; and (if needed) update each attribute's stride and offset in VBO.
-  
-    // check: was WebGL context set to use our VBO & shader program?
-    if(this.isReady()==false) {
-          console.log('ERROR! before' + this.constructor.name + 
-                '.adjust() call you needed to call this.switchToMe()!!');
-    }
-    // Adjust values for our uniforms,
-    this.u_ModelMatrix.setIdentity();
-    // this.u_ModelMatrix.translate(0, -3.0, 1.0);	
-    // this.u_ModelMatrix.translate(0, -3.0, 1.0);	
-  
-    // Normal Matrix = inverse transpose of modelMatrix
-    this.u_NormalMatrix.setIdentity();
-    this.u_NormalMatrix.transpose();
-    this.u_NormalMatrix.setInverseOf(this.u_ModelMatrix);
-    // this.u_NormalMatrix.transpose();
-  
-    this.u_ModelMatrix.translate(0, -3.0, 1.0);	
-    this.u_NormalMatrix.translate(0, -3.0, 1.0);	
-  
-    this.u_NormalMatrix.rotate(sphere_angle, 0, 0, 1);
-    this.u_ModelMatrix.rotate(sphere_angle, 0, 0, 1);
-  
-    // MVP Matrix
-    this.u_MvpMatrix.set(g_worldMat);
-    this.u_MvpMatrix.concat(this.u_ModelMatrix);
-  
-    // Set the ambient light uniform
-    gl.uniform3f(this.u_AmbientLight, 
-                                0.2, 
-                                0.2, 
-                                0.2);
-  
-    // Set the specular term
-    gl.uniform3f(this.u_SpecLoc, 
-                            1.0, 
-                            1.0, 
-                            1.0);	
-  
-    // Set the diffuse term
-    gl.uniform3f(this.u_DiffuseLoc, 
-                            1.0, 
-                            0.0, 
-                            0.0);	
-  
-    // Set the light position
-    gl.uniform3f(this.u_LightPosLoc, 
-                              0.0, 
-                              1000.0, 
-                              0.0);
-  
-    gl.uniform3f(this.u_eyePosWorldLoc, 
-                              eye_x, 
-                              eye_y, 
-                              eye_z);	
-                   
-  
-    if (isBlinn1 == true){ // blinn
-      gl.uniform1i(this.isBlinnLoc, 1);	
-    } else{ // not blinn
-      gl.uniform1i(this.isBlinnLoc, 0);	
-    }     
-                 
-  
-    //  Transfer new uniforms' values to the GPU:-------------
-    // Send  new 'ModelMat' values to the GPU's 'u_ModelMat1' uniform: 
-    gl.uniformMatrix4fv(this.u_ModelMatrixLoc,	// GPU location of the uniform
-                        false, 										// use matrix transpose instead?
-                        this.u_ModelMatrix.elements);	// send data from Javascript.
-                        
-    gl.uniformMatrix4fv(this.u_NormalMatrixLoc,	// GPU location of the uniform
-                        false, 										// use matrix transpose instead?
-                        this.u_NormalMatrix.elements);	// send data from Javascript.
-  
-    gl.uniformMatrix4fv(this.u_MvpMatrixLoc,	// GPU location of the uniform
-                        false, 										// use matrix transpose instead?
-                        this.u_MvpMatrix.elements);	// send data from Javascript.
-  
-  }
-  
-  VBObox1.prototype.drawTower = function() {
-  //=============================================================================
-  // Send commands to GPU to select and render current VBObox contents.
-  
-    // check: was WebGL context set to use our VBO & shader program?
-    if(this.isReady()==false) {
-          console.log('ERROR! before' + this.constructor.name + 
-                '.draw() call you needed to call this.switchToMe()!!');
-    }
-
-    
-    // ----------------------------Draw the contents of the currently-bound VBO:
-    gl.drawArrays(gl.TRIANGLE_STRIP,		    // select the drawing primitive to draw:
-                    // choices: gl.POINTS, gl.LINES, gl.LINE_STRIP, gl.LINE_LOOP, 
-                    //          gl.TRIANGLES, gl.TRIANGLE_STRIP,
-                  this.towerStart, 								// location of 1st vertex to draw;
-                  this.cylVerts);		// number of vertices to draw on-screen.
-
-    
-  }
-  
-  
   
   VBObox1.prototype.reload = function() {
   //=============================================================================
@@ -1435,33 +1342,33 @@ function VBObox0() {
       return;
     }
 
-    this.u_eyePosWorldLoc = gl.getUniformLocation(gl.program, 'u_eyePosWorld');
+    this.u_eyePosWorldLoc = gl.getUniformLocation(this.shaderLoc, 'u_eyePosWorld');
     if (!this.u_eyePosWorldLoc) { 
       console.log(this.constructor.name + 
                   '.init() failed to get GPU location for u_eyePosWorldLoc uniform');
       return;
     }
 
-    this.u_Lamp0PosLoc  = gl.getUniformLocation(gl.program, 	'u_Lamp0Pos');
+    this.u_Lamp0PosLoc  = gl.getUniformLocation(this.shaderLoc, 	'u_Lamp0Pos');
     if (!this.u_Lamp0PosLoc) { 
       console.log(this.constructor.name + 
                   '.init() failed to get GPU location for u_Lamp0PosLoc uniform');
       return;
     }
-    this.u_Lamp0AmbLoc  = gl.getUniformLocation(gl.program, 	'u_Lamp0Amb');
+    this.u_Lamp0AmbLoc  = gl.getUniformLocation(this.shaderLoc, 	'u_Lamp0Amb');
     if (!this.u_Lamp0AmbLoc) { 
       console.log(this.constructor.name + 
                   '.init() failed to get GPU location for u_Lamp0AmbLoc uniform');
       return;
     }
-    this.u_Lamp0DiffLoc = gl.getUniformLocation(gl.program, 	'u_Lamp0Diff');
+    this.u_Lamp0DiffLoc = gl.getUniformLocation(this.shaderLoc, 	'u_Lamp0Diff');
     if (!this.u_Lamp0DiffLoc) { 
       console.log(this.constructor.name + 
                   '.init() failed to get GPU location for u_Lamp0DiffLoc uniform');
       return;
     }
     
-    this.u_Lamp0SpecLoc	= gl.getUniformLocation(gl.program,		'u_Lamp0Spec');
+    this.u_Lamp0SpecLoc	= gl.getUniformLocation(this.shaderLoc,		'u_Lamp0Spec');
     if (!this.u_Lamp0SpecLoc) { 
       console.log(this.constructor.name + 
                   '.init() failed to get GPU location for u_Lamp0SpecLoc uniform');
@@ -1481,7 +1388,7 @@ function VBObox0() {
     //   return;
     // }
 
-    this.u_KdLoc = gl.getUniformLocation(gl.program, 'u_Kd');
+    this.u_KdLoc = gl.getUniformLocation(this.shaderLoc, 'u_Kd');
     if (!this.u_KdLoc) { 
       console.log(this.constructor.name + 
                   '.init() failed to get GPU location for u_Kd uniform');
@@ -1494,7 +1401,7 @@ function VBObox0() {
     //   return;
     // }
 
-    this.u_isBlinnLoc = gl.getUniformLocation(gl.program, 'u_isBlinn');
+    this.u_isBlinnLoc = gl.getUniformLocation(this.shaderLoc, 'u_isBlinn');
     if (!this.u_isBlinnLoc) { 
       console.log(this.constructor.name + 
                   '.init() failed to get GPU location for u_isBlinn uniform');
@@ -1502,11 +1409,11 @@ function VBObox0() {
     }
 
     	// ... for Phong material/reflectance:
-	  matl0.uLoc_Ke = gl.getUniformLocation(gl.program, 'u_MatlSet[0].emit');
-	  matl0.uLoc_Ka = gl.getUniformLocation(gl.program, 'u_MatlSet[0].ambi');
-	  matl0.uLoc_Kd = gl.getUniformLocation(gl.program, 'u_MatlSet[0].diff');
-	  matl0.uLoc_Ks = gl.getUniformLocation(gl.program, 'u_MatlSet[0].spec');
-	  matl0.uLoc_Kshiny = gl.getUniformLocation(gl.program, 'u_MatlSet[0].shiny');
+	  matl0.uLoc_Ke = gl.getUniformLocation(this.shaderLoc, 'u_MatlSet[0].emit');
+	  matl0.uLoc_Ka = gl.getUniformLocation(this.shaderLoc, 'u_MatlSet[0].ambi');
+	  matl0.uLoc_Kd = gl.getUniformLocation(this.shaderLoc, 'u_MatlSet[0].diff');
+	  matl0.uLoc_Ks = gl.getUniformLocation(this.shaderLoc, 'u_MatlSet[0].spec');
+	  matl0.uLoc_Kshiny = gl.getUniformLocation(this.shaderLoc, 'u_MatlSet[0].shiny');
 	  if(!matl0.uLoc_Ke || !matl0.uLoc_Ka || !matl0.uLoc_Kd || !matl0.uLoc_Ks || !matl0.uLoc_Kshiny) {
 		  console.log('Failed to get GPUs Reflectance storage locations');
 		  return;
