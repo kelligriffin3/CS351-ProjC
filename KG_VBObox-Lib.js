@@ -1147,39 +1147,39 @@ function VBObox0() {
 
   this.VERT_SRC =
 	//-------------ATTRIBUTES: of each vertex, read from our Vertex Buffer Object
- `attribute vec4 a_Position;		// vertex position (model coord sys)
+ `
+  struct MatlT {
+    vec3 emit;
+    vec3 ambi;
+    vec3 diff;
+    vec3 spec;
+    int shiny;
+  };
+ 
+  attribute vec4 a_Position;		// vertex position (model coord sys)
   attribute vec4 a_Normal; 			// vertex normal vector (model coord sys)
-//  attribute vec4 a_color; 		// What would 'per-vertex colors' mean in
-										//	in Phong lighting implementation?  disable!
-										// (LATER: replace with attrib. for diffuse reflectance?)
+
 	//-------------UNIFORMS: values set from JavaScript before a drawing command.
- 	uniform vec3 u_Kd; 			//	Instead, we'll use this 'uniform' 
-													// Phong diffuse reflectance for the entire shape
+ 	uniform vec3 u_Kd; 			//	Instead, we'll use this 'uniform' 						
+  uniform MatlT u_MatlSet[1]; // Array of all materials
   uniform mat4 u_MvpMatrix;
   uniform mat4 u_ModelMatrix; 		// Model matrix
-  uniform mat4 u_NormalMatrix;  	// Inverse Transpose of ModelMatrix;
-  																// (doesn't distort normal directions)
+  uniform mat4 u_NormalMatrix;  	
   
 	//-------------VARYING:Vertex Shader values sent per-pixel to Fragment shader:
 	varying vec3 v_Kd;							// Phong Lighting: diffuse reflectance
-																	// (I didn't make per-pixel Ke,Ka,Ks;
-																	// we use 'uniform' values instead)
   varying vec4 v_Position;				
-  varying vec3 v_Normal;					// Why Vec3? its not a point, hence w==0
+  varying vec3 v_Normal;			
 //---------------
   void main() { 
-		// Compute CVV coordinate values from our given vertex. This 'built-in'
-		// per-vertex value gets interpolated to set screen position for each pixel.
+
     gl_Position = u_MvpMatrix * a_Position;
-     // Calculate the vertex position & normal vec in the WORLD coordinate system
-     // for use as a 'varying' variable: fragment shaders get per-pixel values
-     // (interpolated between vertices for our drawing primitive (TRIANGLE)).
     v_Position = u_ModelMatrix * a_Position; 
-		// 3D surface normal of our vertex, in world coords.  ('varying'--its value
-		// gets interpolated (in world coords) for each pixel's fragment shader.
+
     v_Normal = normalize(vec3(u_NormalMatrix * a_Normal));
-		 v_Kd = u_Kd; 		// find per-pixel diffuse reflectance from per-vertex
-													// (no per-pixel Ke,Ka, or Ks, but you can do it...)
+		v_Kd = u_Kd; 
+    v_Kd = u_MatlSet[0].diff;		
+
 //	  v_Kd = vec3(1.0, 1.0, 0.0); // TEST; fixed at green
   }`;
 
@@ -1187,6 +1187,14 @@ function VBObox0() {
  `#ifdef GL_ES
   precision mediump float;
   #endif
+
+  struct MatlT {		// Describes one Phong material by its reflectances:
+    vec3 emit;			// Ke: emissive -- surface 'glow' amount (r,g,b);
+    vec3 ambi;			// Ka: ambient reflectance (r,g,b)
+    vec3 diff;			// Kd: diffuse reflectance (r,g,b)
+    vec3 spec; 			// Ks: specular reflectance (r,g,b)
+    int shiny;			// Kshiny: specular exponent (integer >= 1; typ. <200)
+    };
   
   // first light source: (YOU write a second one...)
   uniform vec4 u_Lamp0Pos; 			// Phong Illum: position
@@ -1197,23 +1205,20 @@ function VBObox0() {
 	// first material definition: you write 2nd, 3rd, etc.
   uniform vec3 u_Ke;						// Phong Reflectance: emissive
   uniform vec3 u_Ka;						// Phong Reflectance: ambient
-	// Phong Reflectance: diffuse? -- use v_Kd instead for per-pixel value
   uniform vec3 u_Ks;						// Phong Reflectance: specular
 //  uniform int u_Kshiny;				// Phong Reflectance: 1 < shiny < 200
 //	
-  uniform vec4 u_eyePosWorld; 	// Camera/eye location in world coords.
+  uniform MatlT u_MatlSet[1];		// Array of all materials.
 
+  uniform vec4 u_eyePosWorld; 	// Camera/eye location in world coords.
   uniform bool u_isBlinn;
   
   varying vec3 v_Normal;		// Find 3D surface normal at each pix
   varying vec4 v_Position;	// pixel's 3D pos too -- in 'world' coords
   varying vec3 v_Kd;				// Find diffuse reflectance K_d per pix
-  													// Ambient? Emissive? Specular? almost
-  													// NEVER change per-vertex: I use'uniform'
 
   void main() { 
 	  vec3 normal = normalize(v_Normal); 
-//	  vec3 normal = v_Normal;
 
 	  vec3 lightDirection = normalize(u_Lamp0Pos.xyz - v_Position.xyz);
 
@@ -1242,16 +1247,19 @@ function VBObox0() {
 		float e32 = e16*e16;
 		float e64 = e32*e32;
 
+    //float e64 = pow(currSpec, float(u_MatlSet[0].shiny));
+
+    // vec3 emissive = u_MatlSet[0].emit;
+    // vec3 ambient = u_LampSet[0].ambi * u_MatlSet[0].ambi;
+    // vec3 diffuse = u_LampSet[0].diff * v_Kd * nDotL;
+    // vec3 speculr = u_LampSet[0].spec * u_MatlSet[0].spec * e64;
+    // gl_FragColor = vec4(emissive + ambient + diffuse + speculr , 1.0);
+
   	vec3 emissive = u_Ke;
     vec3 ambient = u_Lamp0Amb * u_Ka;
     vec3 diffuse = u_Lamp0Diff * v_Kd * nDotL;
   	vec3 speculr = u_Lamp0Spec * u_Ks * e64;
-
     gl_FragColor = vec4(emissive + ambient + diffuse + speculr , 1.0);
-//   gl_FragColor = vec4(emissive, 1.0);
-//   gl_FragColor = vec4(emissive + ambient, 1.0);
-//   gl_FragColor = vec4(emissive + ambient + diffuse, 1.0);
-//   gl_FragColor = vec4(ambient + speculr , 1.0);
   }`;
   
     makeSphere();
@@ -1483,6 +1491,19 @@ function VBObox0() {
       return;
     }
 
+    	// ... for Phong material/reflectance:
+	  matl0.uLoc_Ke = gl.getUniformLocation(gl.program, 'u_MatlSet[0].emit');
+	  matl0.uLoc_Ka = gl.getUniformLocation(gl.program, 'u_MatlSet[0].ambi');
+	  matl0.uLoc_Kd = gl.getUniformLocation(gl.program, 'u_MatlSet[0].diff');
+	  matl0.uLoc_Ks = gl.getUniformLocation(gl.program, 'u_MatlSet[0].spec');
+	  matl0.uLoc_Kshiny = gl.getUniformLocation(gl.program, 'u_MatlSet[0].shiny');
+	  if(!matl0.uLoc_Ke || !matl0.uLoc_Ka || !matl0.uLoc_Kd || !matl0.uLoc_Ks || !matl0.uLoc_Kshiny) {
+		  console.log('Failed to get GPUs Reflectance storage locations');
+		  return;
+	  } else{
+      console.log("All found!!");
+    }
+
   }
   
   VBObox2.prototype.switchToMe = function() {
@@ -1637,6 +1658,13 @@ function VBObox0() {
     } else{
       gl.uniform1i(this.u_isBlinnLoc, 0);
     }
+
+    // Set material attributes
+    gl.uniform3fv(matl0.uLoc_Ke, matl0.K_emit.slice(0,3));				// Ke emissive
+    gl.uniform3fv(matl0.uLoc_Ka, matl0.K_ambi.slice(0,3));				// Ka ambient
+    gl.uniform3fv(matl0.uLoc_Kd, matl0.K_diff.slice(0,3));				// Kd	diffuse
+    gl.uniform3fv(matl0.uLoc_Ks, matl0.K_spec.slice(0,3));				// Ks specular
+    gl.uniform1i(matl0.uLoc_Kshiny, parseInt(matl0.K_shiny, 10));     // Kshiny 
 
   }
   
