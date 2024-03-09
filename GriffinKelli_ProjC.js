@@ -458,7 +458,10 @@ function myKeyDown(kev) {
       case "KeyM":	// LOWER-case 'm' key:
           console.log("key press m");
           matlSel = (matlSel +1)%MATL_DEFAULT;	// see materials_Ayerdi.js for list
-          matl0.setMatl(matlSel);								// set new material reflectances,
+          var name = matl0.setMatl(matlSel);								// set new material reflectances,
+          console.log(name.K_name);
+          document.getElementById('currentMat').innerHTML=
+			        'Current material: '+name.K_name;	
           break;
       case "ArrowLeft": 	
         console.log(' left-arrow.');
@@ -604,7 +607,7 @@ function drawResize() {
 				
 	//Make canvas fill the top 2/3 of our browser window:
 	var xtraMargin = 16; 
-	g_canvasID.width = innerWidth - xtraMargin;
+	g_canvasID.width = innerWidth - (xtraMargin * 2);
 	g_canvasID.height = (innerHeight*7/10) - xtraMargin;
 	// IMPORTANT!  Need a fresh drawing in the re-sized viewports.
 	//draw();				// draw in all viewports.

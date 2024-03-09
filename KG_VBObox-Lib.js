@@ -495,6 +495,15 @@ function VBObox0() {
   `
   precision highp float;				// req'd in OpenGL ES if we use 'float'
    //
+
+   struct MatlT {
+    vec3 emit;
+    vec3 ambi;
+    vec3 diff;
+    vec3 spec;
+    int shiny;
+   };
+
    uniform mat4 u_ModelMatrix;
    uniform mat4 u_MvpMatrix;
    uniform mat4 u_NormalMatrix;
@@ -504,6 +513,7 @@ function VBObox0() {
    uniform vec3 u_LightPos;
    uniform bool isBlinn;
    uniform vec3 u_eyePosWorld;
+  //  uniform MatlT u_MatlSet[1];
   
    attribute vec4 a_Pos1;
    attribute vec3 a_Norm;
@@ -1149,11 +1159,11 @@ function VBObox0() {
 	//-------------ATTRIBUTES: of each vertex, read from our Vertex Buffer Object
  `
   struct MatlT {
-    vec3 emit;
-    vec3 ambi;
-    vec3 diff;
-    vec3 spec;
-    int shiny;
+    highp vec3 emit;
+    highp vec3 ambi;
+    highp vec3 diff;
+    highp vec3 spec;
+    highp int shiny;
   };
  
   attribute vec4 a_Position;		// vertex position (model coord sys)
@@ -1189,11 +1199,11 @@ function VBObox0() {
   #endif
 
   struct MatlT {		// Describes one Phong material by its reflectances:
-    vec3 emit;			// Ke: emissive -- surface 'glow' amount (r,g,b);
-    vec3 ambi;			// Ka: ambient reflectance (r,g,b)
-    vec3 diff;			// Kd: diffuse reflectance (r,g,b)
-    vec3 spec; 			// Ks: specular reflectance (r,g,b)
-    int shiny;			// Kshiny: specular exponent (integer >= 1; typ. <200)
+    highp vec3 emit;			// Ke: emissive -- surface 'glow' amount (r,g,b);
+    highp vec3 ambi;			// Ka: ambient reflectance (r,g,b)
+    highp vec3 diff;			// Kd: diffuse reflectance (r,g,b)
+    highp vec3 spec; 			// Ks: specular reflectance (r,g,b)
+    highp int shiny;			// Kshiny: specular exponent (integer >= 1; typ. <200)
     };
   
   // first light source: (YOU write a second one...)
@@ -1240,26 +1250,26 @@ function VBObox0() {
     }
 
 	  //float e02 = nDotH*nDotH;
-    float e02 = currSpec * currSpec;
-	  float e04 = e02*e02;
-	  float e08 = e04*e04;
-		float e16 = e08*e08;
-		float e32 = e16*e16;
-		float e64 = e32*e32;
+    // float e02 = currSpec * currSpec;
+	  // float e04 = e02*e02;
+	  // float e08 = e04*e04;
+		// float e16 = e08*e08;
+		// float e32 = e16*e16;
+		// float e64 = e32*e32;
 
-    //float e64 = pow(currSpec, float(u_MatlSet[0].shiny));
+    float e64 = pow(currSpec, float(u_MatlSet[0].shiny));
 
-    // vec3 emissive = u_MatlSet[0].emit;
-    // vec3 ambient = u_LampSet[0].ambi * u_MatlSet[0].ambi;
-    // vec3 diffuse = u_LampSet[0].diff * v_Kd * nDotL;
-    // vec3 speculr = u_LampSet[0].spec * u_MatlSet[0].spec * e64;
-    // gl_FragColor = vec4(emissive + ambient + diffuse + speculr , 1.0);
-
-  	vec3 emissive = u_Ke;
-    vec3 ambient = u_Lamp0Amb * u_Ka;
+    vec3 emissive = u_MatlSet[0].emit;
+    vec3 ambient = u_Lamp0Amb * u_MatlSet[0].ambi;
     vec3 diffuse = u_Lamp0Diff * v_Kd * nDotL;
-  	vec3 speculr = u_Lamp0Spec * u_Ks * e64;
+    vec3 speculr = u_Lamp0Spec * u_MatlSet[0].spec * e64;
     gl_FragColor = vec4(emissive + ambient + diffuse + speculr , 1.0);
+
+  	// vec3 emissive = u_Ke;
+    // vec3 ambient = u_Lamp0Amb * u_Ka;
+    // vec3 diffuse = u_Lamp0Diff * v_Kd * nDotL;
+  	// vec3 speculr = u_Lamp0Spec * u_Ks * e64;
+    // gl_FragColor = vec4(emissive + ambient + diffuse + speculr , 1.0);
   }`;
   
     makeSphere();
@@ -1458,18 +1468,18 @@ function VBObox0() {
       return;
     }
     
-    this.u_KeLoc = gl.getUniformLocation(gl.program, 'u_Ke');
-    if (!this.u_KeLoc) { 
-      console.log(this.constructor.name + 
-                  '.init() failed to get GPU location for u_KeLoc uniform');
-      return;
-    }
-    this.u_KaLoc = gl.getUniformLocation(gl.program, 'u_Ka');
-    if (!this.u_KaLoc) { 
-      console.log(this.constructor.name + 
-                  '.init() failed to get GPU location for u_KaLoc uniform');
-      return;
-    }
+    // this.u_KeLoc = gl.getUniformLocation(gl.program, 'u_Ke');
+    // if (!this.u_KeLoc) { 
+    //   console.log(this.constructor.name + 
+    //               '.init() failed to get GPU location for u_KeLoc uniform');
+    //   return;
+    // }
+    // this.u_KaLoc = gl.getUniformLocation(gl.program, 'u_Ka');
+    // if (!this.u_KaLoc) { 
+    //   console.log(this.constructor.name + 
+    //               '.init() failed to get GPU location for u_KaLoc uniform');
+    //   return;
+    // }
 
     this.u_KdLoc = gl.getUniformLocation(gl.program, 'u_Kd');
     if (!this.u_KdLoc) { 
@@ -1477,12 +1487,12 @@ function VBObox0() {
                   '.init() failed to get GPU location for u_Kd uniform');
       return;
     }
-    this.u_KsLoc = gl.getUniformLocation(gl.program, 'u_Ks');
-    if (!this.u_KsLoc) { 
-      console.log(this.constructor.name + 
-                  '.init() failed to get GPU location for u_KsLoc uniform');
-      return;
-    }
+    // this.u_KsLoc = gl.getUniformLocation(gl.program, 'u_Ks');
+    // if (!this.u_KsLoc) { 
+    //   console.log(this.constructor.name + 
+    //               '.init() failed to get GPU location for u_KsLoc uniform');
+    //   return;
+    // }
 
     this.u_isBlinnLoc = gl.getUniformLocation(gl.program, 'u_isBlinn');
     if (!this.u_isBlinnLoc) { 
@@ -1644,10 +1654,10 @@ function VBObox0() {
     gl.uniform3f(this.u_Lamp0SpecLoc, 1.0, 1.0, 1.0);		// Specular
 
     // 	// Set the Phong materials' reflectance:
-    gl.uniform3f(this.u_KeLoc, 0.0, 0.0, 0.0);				// Ke emissive
-    gl.uniform3f(this.u_KaLoc, 0.6, 0.0, 0.0);				// Ka ambient
-    gl.uniform3f(this.u_KdLoc, 0.8, 0.0, 0.0);				// Kd	diffuse
-    gl.uniform3f(this.u_KsLoc, 0.8, 0.8, 0.8);				// Ks specular
+    // gl.uniform3f(this.u_KeLoc, 0.0, 0.0, 0.0);				// Ke emissive
+    // gl.uniform3f(this.u_KaLoc, 0.6, 0.0, 0.0);				// Ka ambient
+    // gl.uniform3f(this.u_KdLoc, 0.8, 0.0, 0.0);				// Kd	diffuse
+    // gl.uniform3f(this.u_KsLoc, 0.8, 0.8, 0.8);				// Ks specular
 
     	// Pass the eye position to u_eyePosWorld
 	  gl.uniform4f(this.u_eyePosWorldLoc, 6,0,0, 1);
