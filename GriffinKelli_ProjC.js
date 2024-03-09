@@ -345,17 +345,44 @@ function VBO0toggle() {
 function VBO1toggle() {
 //=============================================================================
 // Called when user presses HTML-5 button 'Show/Hide VBO1'.
-  if(g_show1 != 1) g_show1 = 1;			// show,
-  else g_show1 = 0;									// hide.
+  if(g_show1 != 1){ // show
+    g_show1 = 1;
+    g_show2 = 0;
+  } else{ // hide
+    g_show1 = 0;
+  } 									
   console.log('g_show1: '+g_show1);
+  
+  printVBO();
 }
 
 function VBO2toggle() {
 //=============================================================================
 // Called when user presses HTML-5 button 'Show/Hide VBO2'.
-  if(g_show2 != 1) g_show2 = 1;			// show,
-  else g_show2 = 0;									// hide.
+  if(g_show2 != 1){ // show
+    g_show2 = 1;
+    g_show1 = 0;
+  }	else{ // hide
+    g_show2 = 0;	
+  } 						
   console.log('g_show2: '+g_show2);
+
+  printVBO();
+}
+
+function printVBO(){
+
+  if (g_show1){
+    document.getElementById("current-VBO").innerHTML= 
+														 '<b>Current shading: Gouraud</b>';
+  } else if (g_show2){
+    document.getElementById("current-VBO").innerHTML= 
+														 '<b>Current shading: Phong</b>';
+  } else{
+    document.getElementById("current-VBO").innerHTML= 
+														 '<b>Current shading: n/a </b>';
+  }
+
 }
 
 function setCamera() {
@@ -579,4 +606,11 @@ function blinn1switch(){
   // dispay the current state on screen
   document.getElementById('VBO-1-is-blinn').innerHTML= 
 														 'Is Blinn  = ' + isBlinn1;
+  if (isBlinn1){
+    document.getElementById('VBO-1-is-blinn').innerHTML= 
+    '<b>Current lighting: Blinn-Phong</b>';
+  } else{
+    document.getElementById('VBO-1-is-blinn').innerHTML= 
+    '<b>Current lighting: Phong<b>';
+  };
 }

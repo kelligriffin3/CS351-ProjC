@@ -1144,34 +1144,6 @@ function VBObox0() {
   // written into code) in all other VBObox functions. Keeping all these (initial)
   // values here, in this one coonstrutor function, ensures we can change them 
   // easily WITHOUT disrupting any other code, ever!
-    
-  //   this.VERT_SRC =	//--------------------- VERTEX SHADER source code 
-  //  `precision highp float;				// req'd in OpenGL ES if we use 'float'
-  //   //
-  //   uniform mat4 u_ModelMatrix;
-  //   uniform mat4 u_MvpMatrix;
-  //   uniform mat4 u_NormalMatrix;
-  //   uniform vec3 u_Kd;
-    
-  //   attribute vec4 a_Position;
-  //   attribute vec3 a_Normal;
-  
-  //   // varying vec3 v_Kd;
-  //   // varying vec4 v_Position;
-  //   varying vec3 v_Normal;
-  //   //
-  //   void main() {
-      
-  //     gl_Position = u_ModelMatrix * a_Position;
-  //     gl_Position = u_NormalMatrix * a_Position;
-  //     gl_Position = u_MvpMatrix * a_Position;
-  //     v_Normal = a_Normal;
-  //     // gl_Position = u_MvpMatrix * a_Position;
-  //     //v_Position = u_ModelMatrix * a_Position;
-  //     //v_Normal = normalize(vec3(u_NormalMatrix * a_Normal));
-  //     //v_Kd = u_Kd;
-
-  //    }`;
 
   this.VERT_SRC =
 	//-------------ATTRIBUTES: of each vertex, read from our Vertex Buffer Object
@@ -1230,6 +1202,8 @@ function VBObox0() {
 //  uniform int u_Kshiny;				// Phong Reflectance: 1 < shiny < 200
 //	
   uniform vec4 u_eyePosWorld; 	// Camera/eye location in world coords.
+
+  uniform bool u_isBlinn;
   
   varying vec3 v_Normal;		// Find 3D surface normal at each pix
   varying vec4 v_Position;	// pixel's 3D pos too -- in 'world' coords
@@ -1247,7 +1221,21 @@ function VBObox0() {
     vec3 eyeDirection = normalize(u_eyePosWorld.xyz - v_Position.xyz); 
 	  vec3 H = normalize(lightDirection + eyeDirection); 
 	  float nDotH = max(dot(H, normal), 0.0);
-	  float e02 = nDotH*nDotH;
+
+    // Specular highlight for phong
+    // vec3 V = normalize(u_eyePosWorld - vertPos;
+    vec3 R = reflect( -lightDirection, normal);
+    float vDotR = max(dot(eyeDirection,R), 0.0);
+
+    float currSpec;
+    if (u_isBlinn){
+      currSpec = nDotH;
+    } else{
+      currSpec = vDotR;
+    }
+
+	  //float e02 = nDotH*nDotH;
+    float e02 = currSpec * currSpec;
 	  float e04 = e02*e02;
 	  float e08 = e04*e04;
 		float e16 = e08*e08;
@@ -1265,27 +1253,6 @@ function VBObox0() {
 //   gl_FragColor = vec4(emissive + ambient + diffuse, 1.0);
 //   gl_FragColor = vec4(ambient + speculr , 1.0);
   }`;
-  
-  //   this.FRAG_SRC = //---------------------- FRAGMENT SHADER source code 
-  //  `precision mediump float;
-
-  // //  uniform vec4 u_Lamp0Pos; 
-  // //  uniform vec3 u_Lamp0Amb;   
-  // //  uniform vec3 u_Lamp0Diff; 
-  // //  uniform vec3 u_Lamp0Spec;	
-
-  // //  uniform vec3 u_Ke;
-  // //  uniform vec3 u_Ka;	
-  // //  uniform vec3 u_Ks;
-  // //  uniform vec4 u_eyePosWorld;
-
-  //   varying vec3 v_Normal;
-  //   // varying vec4 v_Position;	
-  //   // varying vec3 v_Kd;
-  //   void main() {
-  //     gl_FragColor = vec4(v_Normal, 1.0);
-  // //  gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
-  //   }`;
   
     makeSphere();
     this.vboContents = sphVerts;
@@ -1347,6 +1314,8 @@ function VBObox0() {
     this.u_KaLoc;
     this.u_KdLoc;
     this.u_KsLoc;
+
+    this.u_isBlinnLoc;
 
   };
   
@@ -1507,6 +1476,13 @@ function VBObox0() {
       return;
     }
 
+    this.u_isBlinnLoc = gl.getUniformLocation(gl.program, 'u_isBlinn');
+    if (!this.u_isBlinnLoc) { 
+      console.log(this.constructor.name + 
+                  '.init() failed to get GPU location for u_isBlinn uniform');
+      return;
+    }
+
   }
   
   VBObox2.prototype.switchToMe = function() {
@@ -1611,6 +1587,9 @@ function VBObox0() {
     this.NormalMatrix.setInverseOf(this.ModelMatrix);
     this.NormalMatrix.transpose();
 
+    this.NormalMatrix.rotate(sphere_angle, 0, 0, 1);
+    this.ModelMatrix.rotate(sphere_angle, 0, 0, 1);
+
     this.MvpMatrix.set(g_worldMat);
     // console.log("****************************");
     // console.log(this.MvpMatrix);
@@ -1636,7 +1615,8 @@ function VBObox0() {
 
 
       // Position the first light source in World coords: 
-    gl.uniform4f(this.u_Lamp0PosLoc, 6.0, 6.0, 0.0, 1.0);
+    //gl.uniform4f(this.u_Lamp0PosLoc, 6.0, 6.0, 0.0, 1.0);
+    gl.uniform4f(this.u_Lamp0PosLoc, 0.0, 1000.0, 0.0, 1.0);
 	  // Set its light output:  
     gl.uniform3f(this.u_Lamp0AmbLoc,  0.4, 0.4, 0.4);		// ambient
     gl.uniform3f(this.u_Lamp0DiffLoc, 1.0, 1.0, 1.0);		// diffuse
@@ -1650,6 +1630,13 @@ function VBObox0() {
 
     	// Pass the eye position to u_eyePosWorld
 	  gl.uniform4f(this.u_eyePosWorldLoc, 6,0,0, 1);
+
+    // Set u_isBlinn
+    if(isBlinn1 == true){
+      gl.uniform1i(this.u_isBlinnLoc, 1);
+    } else{
+      gl.uniform1i(this.u_isBlinnLoc, 0);
+    }
 
   }
   
