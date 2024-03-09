@@ -315,8 +315,12 @@ var b4Wait = b4Draw - g_lastMS;
   }
   if(g_show1 == 1) { // IF user didn't press HTML button to 'hide' VBO1:
     gouraudBox.switchToMe();  // Set WebGL to render from this VBObox.
-  	gouraudBox.adjust();		  // Send new values for uniforms to the GPU, and
-  	gouraudBox.draw();			  // draw our VBO's contents using our shaders.
+  	gouraudBox.adjustSphere();		  // Send new values for uniforms to the GPU, and
+  	gouraudBox.drawSphere();			  // draw our VBO's contents using our shaders.
+
+    // gouraudBox.adjustTower();
+    // gouraudBox.drawTower();
+
 	  }
 	if(g_show2 == 1) { // IF user didn't press HTML button to 'hide' VBO2:
 	  phongBox.switchToMe();  // Set WebGL to render from this VBObox.
